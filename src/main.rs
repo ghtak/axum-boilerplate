@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
+use axum::{Router, routing::get};
 use tokio;
-use tracing::{span, Level, event};
 mod utils;
 
 fn main() {
@@ -13,27 +13,18 @@ fn main() {
 }
 
 async fn async_main() {
-    let _guard = utils::tracing::init_with_rolling_file("logs", "log");
-    tracing::debug!("X");
-    use std::{thread, time};
+    let _guard = utils::tracing::init_with_rolling_file("logs", "axum-boilerplate").unwrap();
 
-    let ten_millis = time::Duration::from_millis(10);
-
-    thread::sleep(ten_millis);
-    // let span = span!(Level::TRACE, "my span");
-    // span.enter();
-    // event!(parent: &span, Level::INFO, "inside my_function!");
-
-    // utils::log::init_file("log4rs.yaml").expect(
-    //     "log::init_file failed"
-    // );
-    // log::debug!("Log Debug")
-    // let router = Router::new();
-    // let address = format!("0.0.0.0:8089");
-    // axum::Server::bind(&address.parse().unwrap())
-    //     .serve(router.into_make_service())
-    //     .await
-    //     .unwrap()
+    tracing::debug!("App Start");
+    let router = Router::new()
+        .route("/", get(hello_axum));
+    let address = format!("0.0.0.0:8089");
+    axum::Server::bind(&address.parse().unwrap())
+        .serve(router.into_make_service())
+        .await
+        .unwrap()
 }
 
-
+async fn hello_axum() -> &'static str {
+    "Hello Axum"
+}
