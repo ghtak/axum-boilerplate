@@ -1,3 +1,4 @@
 {
-    "editor.fontFamily": "Hack"
+    "editor.fontFamily": "Hack",
+    "editor.inlayHints.enabled": "offUnlessPressed"
 }
