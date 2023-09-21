@@ -1,6 +1,3 @@
 {
-    "rust-analyzer.linkedProjects": [
-        "Cargo.toml",
-    ],
     "editor.fontFamily": "Hack"
 }
