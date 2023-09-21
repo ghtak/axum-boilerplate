@@ -14,8 +14,8 @@ fn main() {
 
 async fn async_main() {
     let _guard = utils::tracing::init_with_rolling_file(
-        "logs", 
-        "log").unwrap();
+        utils::tracing::Config::new("logs", "log")
+    ).unwrap();
 
     let router = Router::new()
         .route("/", get(hello_axum));
