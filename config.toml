@@ -9,6 +9,26 @@ port = 18089
 user = "sa"
 password = "sa"
 
+[trace.rolling_file]
+directory = "./logs"
+file_name_prefix = "log"
+rotation= "DAILY"
+app_only = true
+with_max_level = "TRACE"
+with_file = true
+with_line_number = true
+with_target = false
+
+
+[trace.console]
+app_only = true
+with_max_level = "TRACE"
+with_file = false
+with_line_number = false
+with_target = true
+
+
 [log]
 directory = "./logs"
 file_name_prefix = "log"
+

@@ -4,19 +4,20 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 pub struct TomlConfig {
-    pub http: Http,
-    pub database: Database,
-    pub log: Log
+    pub http: HttpConfig,
+    pub database: DatabaseConfig,
+    pub log: LogConfig,
+    pub trace: TraceConfig,
 }
 
 #[derive(Deserialize, Debug)]
-pub struct Http {
+pub struct HttpConfig {
     pub host: String,
-    pub port: u16
+    pub port: u16,
 }
 
 #[derive(Deserialize, Debug)]
-pub struct Database {
+pub struct DatabaseConfig {
     pub name: String,
     pub host: String,
     pub port: u16,
@@ -25,9 +26,36 @@ pub struct Database {
 }
 
 #[derive(Deserialize, Debug)]
-pub struct Log {
+pub struct LogConfig {
     pub directory: String,
-    pub file_name_prefix: String
+    pub file_name_prefix: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct TraceConfig {
+    pub rolling_file: RollingFileConfig,
+    pub console: ConsoleConfig
+}
+
+#[derive(Deserialize, Debug)]
+pub struct RollingFileConfig {
+    pub directory: String,
+    pub file_name_prefix: String,
+    pub rotation: String,
+    pub app_only: bool,
+    pub with_max_level: String,
+    pub with_file: bool,
+    pub with_line_number: bool,
+    pub with_target: bool,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct ConsoleConfig {
+    pub app_only: bool,
+    pub with_max_level: String,
+    pub with_file: bool,
+    pub with_line_number: bool,
+    pub with_target: bool,
 }
 
 impl TomlConfig {

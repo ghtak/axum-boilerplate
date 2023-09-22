@@ -15,14 +15,9 @@ mod utils;
 #[tokio::main]
 async fn main() {
     let config = utils::config::TomlConfig::from_file("config.toml").unwrap();
-    let _guard = utils::tracing::init_with_rolling_file(utils::tracing::Config::new(
-        &config.log.directory,
-        &config.log.file_name_prefix,
-    ))
-    .unwrap();
+    let _guard = utils::tracing::init(&config.trace).unwrap();
 
-    tracing::trace!("{:?}", config);
-    
+    tracing::trace!("{:#?}", config);
     let address = format!("{}:{}", config.http.host, config.http.port);
     let router = Router::new().route("/", get(hello_axum));
     axum::Server::bind(&address.parse().unwrap())
