@@ -13,8 +13,8 @@ pub struct TraceSettings {
 }
 
 pub struct RollingFileSettings {
-    pub directory: &'static str,
-    pub file_name_prefix: &'static str,
+    pub directory: String,
+    pub file_name_prefix: String,
     pub rotation: Rotation,
 }
 
@@ -25,11 +25,11 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(directory: &'static str, file_name_prefix: &'static str) -> Self {
+    pub fn new(directory: &str, file_name_prefix: &str) -> Self {
         Config {
             rolling_file: RollingFileSettings {
-                directory,
-                file_name_prefix,
+                directory: directory.to_owned(),
+                file_name_prefix: file_name_prefix.to_owned(),
                 rotation: Rotation::DAILY,
             },
             file_trace: TraceSettings {

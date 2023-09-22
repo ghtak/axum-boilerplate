@@ -1,0 +1,14 @@
+[http]
+host = "0.0.0.0"
+port = 18089
+
+[database]
+name = "axum-boilerplate"
+host = "0.0.0.0"
+port = 18089
+user = "sa"
+password = "sa"
+
+[log]
+directory = "./logs"
+file_name_prefix = "log"

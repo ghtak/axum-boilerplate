@@ -1,26 +1,30 @@
 #![allow(dead_code)]
 
-use axum::{Router, routing::get};
+use axum::{routing::get, Router};
 use tokio;
 mod utils;
 
-fn main() {
-    let rt = tokio::runtime::Builder::new_multi_thread()
-        .enable_all()
-        .build()
-        .unwrap();
-    let _ = rt.block_on(async_main());
-}
+// fn main() {
+//     let rt = tokio::runtime::Builder::new_multi_thread()
+//         .enable_all()
+//         .build()
+//         .unwrap();
+//     let _ = rt.block_on(async_main());
+// }
 
-async fn async_main() {
-    let _guard = utils::tracing::init_with_rolling_file(
-        utils::tracing::Config::new("logs", "log")
-    ).unwrap();
+#[tokio::main]
+async fn main() {
+    let config = utils::config::TomlConfig::from_file("config.toml").unwrap();
+    let _guard = utils::tracing::init_with_rolling_file(utils::tracing::Config::new(
+        &config.log.directory,
+        &config.log.file_name_prefix,
+    ))
+    .unwrap();
 
-    let router = Router::new()
-        .route("/", get(hello_axum));
-    let address = format!("0.0.0.0:18089");
-    tracing::trace!(address);
+    tracing::trace!("{:?}", config);
+    
+    let address = format!("{}:{}", config.http.host, config.http.port);
+    let router = Router::new().route("/", get(hello_axum));
     axum::Server::bind(&address.parse().unwrap())
         .serve(router.into_make_service())
         .await
