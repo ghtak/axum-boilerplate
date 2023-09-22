@@ -4,6 +4,8 @@ use tracing_appender::{
 };
 use tracing_subscriber::{fmt::writer::MakeWriterExt, prelude::__tracing_subscriber_SubscriberExt};
 
+// todo Config from Toml
+
 pub struct TraceSettings {
     pub level: tracing::Level,
     pub app_log_only: bool,
@@ -61,7 +63,7 @@ pub fn init_with_rolling_file(config: Config) -> anyhow::Result<WorkerGuard> {
     let file_layer = {
         let app_only = config.file_trace.app_log_only;
         let app_name = module_path!().split("::").next().unwrap().to_owned();
-        tracing_subscriber::fmt::Layer::default()
+        tracing_subscriber::fmt::layer()
             .with_file(config.file_trace.with_file)
             .with_line_number(config.file_trace.with_line_number)
             .with_target(config.file_trace.with_target)
@@ -75,14 +77,14 @@ pub fn init_with_rolling_file(config: Config) -> anyhow::Result<WorkerGuard> {
                         } else {
                             true
                         }
-                    }),
+                    })
             )
     };
 
     let console_layer = {
         let app_only = config.console_trace.app_log_only;
         let app_name = module_path!().split("::").next().unwrap().to_owned();
-        tracing_subscriber::fmt::Layer::default()
+        tracing_subscriber::fmt::layer()
             .with_file(config.console_trace.with_file)
             .with_line_number(config.console_trace.with_line_number)
             .with_target(config.console_trace.with_target)
@@ -96,7 +98,7 @@ pub fn init_with_rolling_file(config: Config) -> anyhow::Result<WorkerGuard> {
                         } else {
                             true
                         }
-                    }),
+                    })
             )
     };
 
