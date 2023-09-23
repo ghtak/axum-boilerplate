@@ -1,12 +1,13 @@
+use axum::response::IntoResponse;
 use axum::{extract::State, Router};
 use axum::{Json, TypedHeader};
-use axum_extra::extract::cookie::{self, Cookie};
+use axum_extra::extract::cookie::Cookie;
 use axum_extra::extract::CookieJar;
 use hyper::StatusCode;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-use crate::application_context::ApplicationContext;
+use crate::app_state::AppState;
 use crate::diagnostics::{Error, Result};
 
 async fn index() -> &'static str {
@@ -25,7 +26,7 @@ async fn error() -> Result<()> {
     })
 }
 
-async fn state(State(_ctx): State<ApplicationContext>) -> Result<&'static str> {
+async fn state(State(_ctx): State<AppState>) -> Result<&'static str> {
     Ok("")
 }
 
@@ -42,7 +43,8 @@ struct CookieValue {
     pub value: String,
 }
 
-async fn cookie(jar: CookieJar) -> (StatusCode, CookieJar, Json<serde_json::Value>) {
+//async fn cookie(jar: CookieJar) -> (StatusCode, CookieJar, Json<serde_json::Value>) {
+    async fn cookie(jar: CookieJar) -> impl IntoResponse {
     let value = jar
         .get("session_id")
         .map(|v| v.value().to_owned())
@@ -51,7 +53,7 @@ async fn cookie(jar: CookieJar) -> (StatusCode, CookieJar, Json<serde_json::Valu
         .unwrap_or(0);
 
     let jar = jar.add(Cookie::new("session_id", (value + 1).to_string()));
-    
+
     let values = jar
         .iter()
         .map(|x| CookieValue {
@@ -73,7 +75,7 @@ async fn cookie(jar: CookieJar) -> (StatusCode, CookieJar, Json<serde_json::Valu
 //     "message" : mesage
 // })))
 
-pub(crate) fn router(application_context: ApplicationContext) -> Router {
+pub(crate) fn router(application_context: AppState) -> Router {
     Router::new()
         .route("/", axum::routing::get(index))
         .route("/error", axum::routing::get(error))

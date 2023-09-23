@@ -1,9 +1,9 @@
 #![allow(dead_code)]
 
-use application_context::ApplicationContext;
+use app_state::AppState;
 use tokio;
 
-mod application_context;
+mod app_state;
 mod diagnostics;
 mod route;
 mod utils;
@@ -13,7 +13,7 @@ async fn main() {
     let config = utils::config::TomlConfig::from_file("config.toml").unwrap();
     let _guard = utils::tracing::init(&config.tracing).unwrap();
     tracing::trace!("{config:?}");
-    let application_context = ApplicationContext {};
+    let application_context = AppState {};
     let router = route::init_router(application_context, &config.http);
     let address = config.http.socket_addr().unwrap();
     axum::Server::bind(&address)

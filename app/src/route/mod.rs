@@ -4,7 +4,7 @@ use axum::{handler::HandlerWithoutStateExt, Router};
 use hyper::Uri;
 use tower_http::services::ServeDir;
 
-use crate::{diagnostics::Error, utils::config::HttpConfig, application_context::ApplicationContext};
+use crate::{diagnostics::Error, utils::config::HttpConfig, app_state::AppState};
 
 // pub(crate) fn router<T>() -> Router<T>
 // where
@@ -14,7 +14,7 @@ use crate::{diagnostics::Error, utils::config::HttpConfig, application_context::
 // }
 
 pub(crate) fn init_router(
-    application_context: ApplicationContext,
+    application_context: AppState,
     config: &HttpConfig) -> Router
 {
     let static_serv_service = {
