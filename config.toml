@@ -1,6 +1,7 @@
 [http]
 host = "0.0.0.0"
 port = 18089
+static_directory = "./static"
 
 [database]
 name = "axum-boilerplate"
@@ -9,7 +10,7 @@ port = 18089
 user = "sa"
 password = "sa"
 
-[trace.rolling_file]
+[tracing.rolling_file]
 directory = "./logs"
 file_name_prefix = "log"
 rotation= "DAILY"
@@ -19,16 +20,9 @@ with_file = true
 with_line_number = true
 with_target = false
 
-
-[trace.console]
+[tracing.console]
 app_only = true
 with_max_level = "TRACE"
 with_file = false
 with_line_number = false
 with_target = true
-
-
-[log]
-directory = "./logs"
-file_name_prefix = "log"
-

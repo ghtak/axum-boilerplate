@@ -1,7 +1,11 @@
 #![allow(dead_code)]
 
-use axum::{routing::get, Router};
+use application_context::ApplicationContext;
 use tokio;
+
+mod application_context;
+mod diagnostics;
+mod routes;
 mod utils;
 
 // fn main() {
@@ -15,18 +19,13 @@ mod utils;
 #[tokio::main]
 async fn main() {
     let config = utils::config::TomlConfig::from_file("config.toml").unwrap();
-    let _guard = utils::tracing::init(&config.trace).unwrap();
-
-    tracing::trace!("{:#?}", config);
-    let address = format!("{}:{}", config.http.host, config.http.port);
-    let router = Router::new().route("/", get(hello_axum));
-    axum::Server::bind(&address.parse().unwrap())
+    let _guard = utils::tracing::init(&config.tracing).unwrap();
+    tracing::trace!("{config:?}");
+    let application_context = ApplicationContext {};
+    let router = routes::init_router(application_context, &config.http);
+    let address = config.http.socket_addr().unwrap();
+    axum::Server::bind(&address)
         .serve(router.into_make_service())
         .await
         .unwrap()
-}
-
-async fn hello_axum() -> &'static str {
-    tracing::debug!("hello_axum");
-    "Hello Axum"
 }
