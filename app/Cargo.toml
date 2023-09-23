@@ -1,5 +1,5 @@
 [package]
-name = "axum-boilerplate"
+name = "app"
 version = "0.1.0"
 edition = "2021"
 
@@ -12,7 +12,8 @@ tokio = { version = "1.28.2", features = ["full"] }
 tracing = "0.1.37"
 tracing-appender = "0.2.2"
 tracing-subscriber = "0.3.17"
-axum = { version = "0.6.18", features = ["multipart", "ws"] }
+axum = { version = "0.6.18", features = ["multipart", "ws", "headers"] }
+axum-extra = { version = "0.8.0", features = ["cookie"] }
 axum-macros = "0.3.7"
 hyper = { version = "0.14.26", features = ["full"] }
 tower =  { version = "0.4", features = ["full"] }
