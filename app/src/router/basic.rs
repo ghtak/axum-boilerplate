@@ -1,4 +1,6 @@
-use axum::extract::Path;
+use std::collections::HashMap;
+
+use axum::extract::{Path, Query};
 use axum::response::IntoResponse;
 use axum::{extract::State, Router};
 use axum::{Json, TypedHeader};
@@ -105,6 +107,10 @@ async fn path_v3(
     format!("{:?} {:?}", param.a, param.b).to_owned()
 }
 
+async fn query(Query(params): Query<HashMap<String,String>>) -> impl IntoResponse {
+    format!("{:?}", params)
+}
+
 pub(crate) fn router(app_state: AppState) -> Router {
     Router::new()
         .route("/", axum::routing::get(index))
@@ -115,5 +121,6 @@ pub(crate) fn router(app_state: AppState) -> Router {
         .route("/path/:id", axum::routing::get(path))
         //.route("/path/:a/:b", axum::routing::get(path_v2))
         .route("/path/:a/:b", axum::routing::get(path_v3))
+        .route("/query", axum::routing::get(query))
         .with_state(app_state)
 }
