@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use axum::extract::{Path, Query};
-use axum::response::IntoResponse;
+use axum::extract::{Multipart, Path, Query};
+use axum::response::{Html, IntoResponse};
 use axum::{extract::State, Router};
 use axum::{Json, TypedHeader};
 use axum_extra::extract::cookie::Cookie;
@@ -76,39 +76,85 @@ struct JsonValue {
 
 async fn json_value(
     WithRejection(Json(v), _): WithRejection<Json<JsonValue>, diagnostics::Error>,
-) -> Result<String>{
+) -> Result<String> {
     Ok(format!("{:?}", v).to_owned())
 }
 
 async fn path(
-    WithRejection(Path(p), _): WithRejection<Path<i32>, diagnostics::Error>
-) -> impl IntoResponse
-{
+    WithRejection(Path(p), _): WithRejection<Path<i32>, diagnostics::Error>,
+) -> impl IntoResponse {
     format!("{:?}", p).to_owned()
 }
 
 async fn path_v2(
-    WithRejection(Path((p1,p2)), _): WithRejection<Path<(i32, i32)>, diagnostics::Error>,
-) -> impl IntoResponse
-{
+    WithRejection(Path((p1, p2)), _): WithRejection<Path<(i32, i32)>, diagnostics::Error>,
+) -> impl IntoResponse {
     format!("{:?} {:?}", p1, p2).to_owned()
 }
 
 #[derive(Deserialize, Debug)]
-struct PathParam{
+struct PathParam {
     a: i32,
-    b: String
+    b: String,
 }
 
 async fn path_v3(
     WithRejection(Path(param), _): WithRejection<Path<PathParam>, diagnostics::Error>,
-) -> impl IntoResponse
-{
+) -> impl IntoResponse {
     format!("{:?} {:?}", param.a, param.b).to_owned()
 }
 
-async fn query(Query(params): Query<HashMap<String,String>>) -> impl IntoResponse {
+async fn query(Query(params): Query<HashMap<String, String>>) -> impl IntoResponse {
     format!("{:?}", params)
+}
+
+async fn multipart_get() -> Html<&'static str> {
+    r#"
+        <!DOCTYPE html>
+        <html lang="ko">
+        <head>
+            <meta charset="UTF-8">
+            <title>Title</title>
+        </head>
+        <body>
+            <input id="video-file" type="file" name="file"/>
+            <button onclick="sendfile()">업로드</button>
+            <div id="result"></div>
+        </body>
+        <script>
+            const sendfile = () => {
+                const file = document.getElementById("video-file").files[0];
+                const resultElement = document.getElementById("result");
+                const formData = new FormData();
+                formData.append("/a/b/c", file);
+                fetch("/basic/multipart", {
+                        method: "POST",
+                        body: formData,
+                        // headers: headers,
+                    }).then(resp => {
+                        resp.text().then(data => resultElement.textContent = data);
+                    }).catch(err => {
+                        console.error("Error uploading video chunk");
+                    });
+            }
+        </script>
+        </html>
+        "#
+    .into()
+}
+
+async fn multipart_post(mut multipart: Multipart) -> diagnostics::Result<&'static str> {
+    while let Some(mut field) = multipart.next_field().await? {
+        while let Some(chunk) = field.chunk().await.map_err(|_err| Error::NotFound)? {
+            tracing::debug!(
+                "Length of `{:?}` '{:?}'is {} bytes",
+                field.name(),
+                field.file_name(),
+                chunk.len()
+            );
+        }
+    }
+    Ok("Done")
 }
 
 pub(crate) fn router(app_state: AppState) -> Router {
@@ -122,5 +168,9 @@ pub(crate) fn router(app_state: AppState) -> Router {
         //.route("/path/:a/:b", axum::routing::get(path_v2))
         .route("/path/:a/:b", axum::routing::get(path_v3))
         .route("/query", axum::routing::get(query))
+        .route(
+            "/multipart",
+            axum::routing::get(multipart_get).post(multipart_post),
+        )
         .with_state(app_state)
 }

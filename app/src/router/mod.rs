@@ -1,4 +1,5 @@
 pub(crate) mod basic;
+mod v1;
 
 use axum::{handler::HandlerWithoutStateExt, Router};
 use hyper::Uri;
@@ -15,5 +16,6 @@ pub(crate) fn init_router(app_state: AppState, config: &HttpConfig) -> Router {
     Router::new()
         //.merge(basic::router(app_state.clone()))
         .nest("/basic", basic::router(app_state.clone()))
+        .nest("/v1/sample", crate::router::v1::sample_router::router(app_state.clone()))
         .fallback_service(static_serv_service)
 }

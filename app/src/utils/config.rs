@@ -30,6 +30,7 @@ pub(crate) struct DatabaseConfig {
     pub(crate) port: u16,
     pub(crate) user: String,
     pub(crate) password: String,
+    pub(crate) max_connection: u32
 }
 
 impl DatabaseConfig {

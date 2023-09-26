@@ -1,5 +1,5 @@
 use axum::{
-    extract::rejection::{JsonRejection, PathRejection},
+    extract::{rejection::{JsonRejection, PathRejection}, multipart::MultipartError},
     response::IntoResponse,
     Json,
 };
@@ -19,6 +19,12 @@ pub enum Error {
 
     #[error(transparent)]
     PathRejection(#[from] PathRejection),
+
+    #[error(transparent)]
+    MultipartError(#[from] MultipartError),
+
+    #[error(transparent)]
+    SqlXError(#[from] sqlx::Error),
 
     #[error(transparent)]
     Other(#[from] anyhow::Error),

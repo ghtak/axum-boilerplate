@@ -23,6 +23,4 @@ serde_json = "1.0.99"
 anyhow = "1.0.75"
 toml = "0.8.0"
 thiserror = "1.0.48"
-
-[dev-dependencies]
-httpc-test = "0.1.5"
+sqlx = { version = "0.7", features = [ "runtime-tokio", "tls-rustls", "postgres", "json", "sqlite"] }

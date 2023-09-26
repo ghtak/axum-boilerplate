@@ -9,6 +9,7 @@ host = "0.0.0.0"
 port = 18089
 user = "sa"
 password = "sa"
+max_connection = 8
 
 [tracing.rolling_file]
 directory = "./logs"
