@@ -1,4 +1,3 @@
-use std::sync::PoisonError;
 
 use axum::{
     extract::{rejection::{JsonRejection, PathRejection}, multipart::MultipartError},
