@@ -1,4 +1,5 @@
-mod sample_repository;
+pub(crate) mod sample_repository;
+pub(crate) mod sample_repository_impl;
 
 use axum::{
     async_trait,
@@ -9,6 +10,7 @@ use axum::{
 use crate::diagnostics;
 
 pub(crate) use self::sample_repository::SampleRepository;
+pub(crate) use self::sample_repository_impl::SampleRepositoryImpl;
 
 pub(crate) struct Repository<T>(pub T);
 

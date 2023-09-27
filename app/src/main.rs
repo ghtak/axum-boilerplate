@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use std::env;
+
 use app_state::AppState;
 use tokio;
 
@@ -12,8 +14,12 @@ mod router;
 mod utils;
 mod usecase;
 
+#[cfg(test)]
+mod tests;
+
 #[tokio::main]
 async fn main() {
+    println!("{:?}", env::current_dir().unwrap());
     let config = utils::config::TomlConfig::from_file("config.toml").unwrap();
     let _guard = utils::tracing::init(&config.tracing).unwrap();
     tracing::trace!("{config:?}");

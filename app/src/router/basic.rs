@@ -158,6 +158,12 @@ async fn multipart_post(mut multipart: Multipart) -> diagnostics::Result<&'stati
     Ok("Done")
 }
 
+async fn tree(
+    WithRejection(Path(path), _): WithRejection<Path<String>, diagnostics::Error>,
+) -> impl IntoResponse {
+    format!("Path : {}", path)
+}
+
 pub(crate) fn router_(app_state: AppState) -> Router {
     Router::new()
         .route("/", axum::routing::get(index))
@@ -173,6 +179,7 @@ pub(crate) fn router_(app_state: AppState) -> Router {
             "/multipart",
             axum::routing::get(multipart_get).post(multipart_post),
         )
+        .route("/tree/*path", axum::routing::get(tree))
         .with_state(app_state)
 }
 
@@ -191,4 +198,5 @@ pub(crate) fn router() -> Router<AppState> {
             "/multipart",
             axum::routing::get(multipart_get).post(multipart_post),
         )
+        .route("/tree/*path", axum::routing::get(tree))
 }

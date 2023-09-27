@@ -1,4 +1,4 @@
-mod sample_usecase;
+mod basic_sample_usecase;
 
 use axum::{
     async_trait,
@@ -6,9 +6,10 @@ use axum::{
     http::request::Parts,
 };
 
-use crate::diagnostics;
+use crate::{diagnostics, repository::SampleRepositoryImpl};
 
-pub(crate) use self::sample_usecase::SampleUsecase;
+pub(crate) use self::basic_sample_usecase::BasicSampleUsecase;
+
 
 pub(crate) struct Usecase<T>(pub T);
 
@@ -24,3 +25,6 @@ where
         Ok(Usecase::<T>(T::from_ref(state).into()))
     }
 }
+
+// user custom exports
+pub(crate) type SampleUsecase = BasicSampleUsecase<SampleRepositoryImpl>;
