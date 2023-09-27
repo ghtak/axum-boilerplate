@@ -3,15 +3,14 @@
 use app_state::AppState;
 use tokio;
 
-use crate::entity::Sample;
-
 mod app_state;
 mod diagnostics;
-mod router;
-mod utils;
+mod dto;
 mod entity;
 mod repository;
-mod dto;
+mod router;
+mod utils;
+mod usecase;
 
 #[tokio::main]
 async fn main() {

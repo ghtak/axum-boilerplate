@@ -1,10 +1,13 @@
+use axum::extract::FromRef;
 use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, Sqlite, SqlitePool};
 
 use crate::{diagnostics, utils::config::TomlConfig};
 
 pub type DBPool = SqlitePool;
 
-#[derive(Clone)]
+// https://docs.rs/axum/latest/axum/extract/struct.State.html
+
+#[derive(Clone, Debug)]
 pub(crate) struct AppState {
     pub db_pool: DBPool, //pub db_pool: PgPool,
 }
@@ -49,5 +52,13 @@ impl AppState {
         .execute(&self.db_pool)
         .await?;
         Ok(())
+    }
+}
+
+// substate
+// async fn handler(State(db_pool): State<DBPool>) -> ...{}
+impl FromRef<AppState> for DBPool{
+    fn from_ref(input: &AppState) -> Self {
+        input.db_pool.clone()
     }
 }

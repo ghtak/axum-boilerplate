@@ -1,11 +1,12 @@
 use crate::{app_state::DBPool, diagnostics, entity::Sample};
 
-pub(crate) struct SampleRepository<'a> {
-    pub pool: &'a DBPool,
+#[derive(Debug)]
+pub(crate) struct SampleRepository {
+    pub pool: DBPool,
 }
 
-impl<'a> SampleRepository<'a> {
-    pub fn new(pool: &'a DBPool) -> Self {
+impl SampleRepository {
+    pub fn new(pool: DBPool) -> Self {
         SampleRepository { pool }
     }
 
@@ -18,13 +19,20 @@ impl<'a> SampleRepository<'a> {
             "#,
         )
         .bind(sample.name.as_str())
-        .fetch_one(self.pool)
+        .fetch_one(&self.pool)
         .await?)
     }
 
     pub async fn find_all(&self) -> diagnostics::Result<Vec<Sample>> {
         Ok(sqlx::query_as::<_, Sample>("select * from sample")
-            .fetch_all(self.pool)
+            .fetch_all(&self.pool)
             .await?)
+    }
+}
+
+
+impl From<DBPool> for SampleRepository {
+    fn from(pool: DBPool) -> Self {
+        SampleRepository { pool }
     }
 }

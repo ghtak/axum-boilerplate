@@ -30,7 +30,8 @@ async fn error() -> Result<()> {
 }
 
 async fn state(State(_ctx): State<AppState>) -> Result<&'static str> {
-    Result::Ok("")
+    tracing::debug!("{:?}", _ctx);
+    Result::Ok("xxx")
 }
 
 async fn cookie_typed_header(
@@ -157,7 +158,7 @@ async fn multipart_post(mut multipart: Multipart) -> diagnostics::Result<&'stati
     Ok("Done")
 }
 
-pub(crate) fn router(app_state: AppState) -> Router {
+pub(crate) fn router_(app_state: AppState) -> Router {
     Router::new()
         .route("/", axum::routing::get(index))
         .route("/error", axum::routing::get(error))
@@ -173,4 +174,21 @@ pub(crate) fn router(app_state: AppState) -> Router {
             axum::routing::get(multipart_get).post(multipart_post),
         )
         .with_state(app_state)
+}
+
+pub(crate) fn router() -> Router<AppState> {
+    Router::new()
+        .route("/", axum::routing::get(index))
+        .route("/error", axum::routing::get(error))
+        .route("/state", axum::routing::get(state))
+        .route("/cookie", axum::routing::get(cookie))
+        .route("/json_value", axum::routing::post(json_value))
+        .route("/path/:id", axum::routing::get(path))
+        //.route("/path/:a/:b", axum::routing::get(path_v2))
+        .route("/path/:a/:b", axum::routing::get(path_v3))
+        .route("/query", axum::routing::get(query))
+        .route(
+            "/multipart",
+            axum::routing::get(multipart_get).post(multipart_post),
+        )
 }
