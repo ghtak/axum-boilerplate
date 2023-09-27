@@ -6,6 +6,7 @@ use crate::{
     diagnostics, dto,
     entity::Sample,
     repository::{Repository, SampleRepository},
+    usecase::{SampleUsecase, Usecase},
 };
 
 async fn get_samples(State(app_state): State<AppState>) -> diagnostics::Result<Json<Vec<Sample>>> {
@@ -19,12 +20,7 @@ async fn create_sample(
     WithRejection(Json(v), _): WithRejection<Json<dto::SampleCreate>, diagnostics::Error>,
 ) -> diagnostics::Result<Json<Sample>> {
     let repo = SampleRepository::new(app_state.db_pool.clone());
-    let samples = repo
-        .save(Sample {
-            id: -1,
-            name: v.name,
-        })
-        .await?;
+    let samples = repo.save(Sample::from_name(v.name)).await?;
     Ok(Json(samples))
 }
 
@@ -39,13 +35,23 @@ async fn create_sample_v2(
     Repository(sample_repo): Repository<SampleRepository>,
     WithRejection(Json(v), _): WithRejection<Json<dto::SampleCreate>, diagnostics::Error>,
 ) -> diagnostics::Result<Json<Sample>> {
-    let samples = sample_repo
-        .save(Sample {
-            id: -1,
-            name: v.name,
-        })
-        .await?;
+    let samples = sample_repo.save(Sample::from_name(v.name)).await?;
     Ok(Json(samples))
+}
+
+async fn get_samples_v3(
+    Usecase(sample_usecase): Usecase<SampleUsecase>,
+) -> diagnostics::Result<Json<Vec<Sample>>> {
+    let samples = sample_usecase.find_all().await?;
+    Ok(Json(samples))
+}
+
+async fn create_sample_v3(
+    Usecase(sample_usecase): Usecase<SampleUsecase>,
+    WithRejection(Json(v), _): WithRejection<Json<dto::SampleCreate>, diagnostics::Error>,
+) -> diagnostics::Result<Json<Sample>> {
+    let sample = sample_usecase.save(Sample::from_name(v.name)).await?;
+    Ok(Json(sample))
 }
 
 pub(crate) fn router_(app_state: AppState) -> Router {
@@ -55,5 +61,5 @@ pub(crate) fn router_(app_state: AppState) -> Router {
 }
 
 pub(crate) fn router() -> Router<AppState> {
-    Router::new().route("/", get(get_samples_v2).post(create_sample_v2))
+    Router::new().route("/", get(get_samples_v3).post(create_sample_v3))
 }

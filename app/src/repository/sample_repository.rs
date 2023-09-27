@@ -1,4 +1,10 @@
-use crate::{app_state::DBPool, diagnostics, entity::Sample};
+use axum::extract::FromRef;
+
+use crate::{
+    app_state::{AppState, DBPool},
+    diagnostics,
+    entity::{Entity, Sample},
+};
 
 #[derive(Debug)]
 pub(crate) struct SampleRepository {
@@ -11,16 +17,24 @@ impl SampleRepository {
     }
 
     pub async fn save(&self, sample: Sample) -> diagnostics::Result<Sample> {
-        Ok(sqlx::query_as::<_, Sample>(
-            r#"
-            insert into sample(name)
-            values ($1)
-            returning id, name
-            "#,
-        )
-        .bind(sample.name.as_str())
-        .fetch_one(&self.pool)
-        .await?)
+        if Entity::is_new(&sample) {
+            Ok(
+                sqlx::query_as::<_, Sample>(
+                    r#" insert into sample(name) values ($1) returning * "#,
+                )
+                .bind(sample.name.as_str())
+                .fetch_one(&self.pool)
+                .await?,
+            )
+        } else {
+            Ok(sqlx::query_as::<_, Sample>(
+                r#" insert or replace into sample(id,name) values ($1,$2) returning * "#,
+            )
+            .bind(sample.id)
+            .bind(sample.name.as_str())
+            .fetch_one(&self.pool)
+            .await?)
+        }
     }
 
     pub async fn find_all(&self) -> diagnostics::Result<Vec<Sample>> {
@@ -30,9 +44,8 @@ impl SampleRepository {
     }
 }
 
-
-impl From<DBPool> for SampleRepository {
-    fn from(pool: DBPool) -> Self {
-        SampleRepository { pool }
+impl FromRef<AppState> for SampleRepository {
+    fn from_ref(state: &AppState) -> Self {
+        SampleRepository::new(state.db_pool.clone())
     }
 }
