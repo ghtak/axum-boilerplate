@@ -6,10 +6,7 @@ use axum::{
     http::request::Parts,
 };
 
-use crate::{diagnostics, repository::SampleRepositoryImpl};
-
-pub(crate) use self::basic_sample_usecase::BasicSampleUsecase;
-
+use crate::{diagnostics, repository::SampleRepositoryDB};
 
 pub(crate) struct Usecase<T>(pub T);
 
@@ -26,5 +23,6 @@ where
     }
 }
 
+pub(crate) use self::basic_sample_usecase::BasicSampleUsecase;
 // user custom exports
-pub(crate) type SampleUsecase = BasicSampleUsecase<SampleRepositoryImpl>;
+pub(crate) type SampleUsecase = BasicSampleUsecase<SampleRepositoryDB>;

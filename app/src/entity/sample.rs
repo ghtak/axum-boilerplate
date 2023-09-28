@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::{Entity, NEW_REDORD_ID};
+use super::Entity;
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Sample {
@@ -11,7 +11,7 @@ pub struct Sample {
 impl Sample {
     pub fn from_name(name: String) -> Self {
         Sample {
-            id: NEW_REDORD_ID,
+            id: Self::NEW_ENTITY_ID,
             name,
         }
     }
@@ -23,6 +23,6 @@ impl Sample {
 
 impl Entity for Sample {
     fn is_new(&self) -> bool {
-        self.id == NEW_REDORD_ID
+        self.id == Self::NEW_ENTITY_ID
     }
 }

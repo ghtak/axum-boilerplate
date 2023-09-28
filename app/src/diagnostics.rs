@@ -25,7 +25,10 @@ pub enum Error {
     MultipartError(#[from] MultipartError),
 
     #[error(transparent)]
-    SqlXError(#[from] sqlx::Error),
+    SqlXError(sqlx::Error),
+
+    #[error("RowNotFound")]
+    RowNotFound,
 
     #[error(transparent)]
     Other(#[from] anyhow::Error),
@@ -41,6 +44,18 @@ pub enum Error {
         code: StatusCode,
         json: serde_json::Value,
     },
+
+    #[error("Not Implemented")]
+    NotImplemented,
+}
+
+impl From<sqlx::Error> for Error {
+    fn from(value: sqlx::Error) -> Self {
+        match value {
+            sqlx::Error::RowNotFound => Error::RowNotFound,
+            _ => Error::SqlXError(value)
+        }
+    }
 }
 
 impl IntoResponse for Error {
