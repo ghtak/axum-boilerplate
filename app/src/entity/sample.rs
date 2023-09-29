@@ -7,7 +7,7 @@ pub struct Sample {
 }
 
 impl Sample {
-    pub fn from_name(name: String) -> Self {
+    pub fn with_name(name: String) -> Self {
         Sample {
             id: i64::default(),
             name,

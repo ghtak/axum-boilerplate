@@ -110,10 +110,10 @@ async fn sample_usecase() {
     let sample_usecase_impl =
         BasicSampleUsecase::<SampleRepositoryMap>::new(SampleRepositoryMap::new());
     let s = sample_usecase_impl
-        .create(Sample::from_name("s".into()))
+        .create(Sample::with_name("s".into()))
         .await;
     let _s1 = sample_usecase_impl
-        .create(Sample::from_name("s1".into()))
+        .create(Sample::with_name("s1".into()))
         .await;
     
     println!("{:?}", s);
