@@ -1,29 +1,29 @@
 use axum::{async_trait, extract::FromRef};
+use sqlx::{Pool, QueryBuilder};
 
 use crate::{
-    app_state::{AppState, DBPool},
+    app_state::{AppState, DataBase},
     diagnostics,
     entity::Sample,
+    repository::BasicRepository,
 };
 
-use super::CrudRepository;
-
 #[async_trait]
-pub(crate) trait SampleRepository: CrudRepository<Sample, i64> + FromRef<AppState> {}
+pub(crate) trait SampleRepository: BasicRepository<Sample, i64> + FromRef<AppState> {}
 
 pub(crate) struct SampleRepositoryDB {
-    pub pool: DBPool,
+    pub pool: Pool<DataBase>,
 }
 
 impl SampleRepositoryDB {
-    pub fn new(pool: DBPool) -> Self {
+    pub fn new(pool: Pool<DataBase>) -> Self {
         SampleRepositoryDB { pool }
     }
 }
 
 #[async_trait]
-impl CrudRepository<Sample, i64> for SampleRepositoryDB {
-    async fn add(&self, entity: Sample) -> diagnostics::Result<Sample> {
+impl BasicRepository<Sample, i64> for SampleRepositoryDB {
+    async fn create(&self, entity: Sample) -> diagnostics::Result<Sample> {
         Ok(
             sqlx::query_as::<_, Sample>(r#" insert into sample(name) values ($1) returning * "#)
                 .bind(entity.name.as_str())
@@ -47,7 +47,7 @@ impl CrudRepository<Sample, i64> for SampleRepositoryDB {
         )
     }
 
-    async fn save(&self, entity: Sample) -> diagnostics::Result<Sample> {
+    async fn update(&self, entity: Sample) -> diagnostics::Result<Sample> {
         Ok(sqlx::query_as::<_, Sample>(
             r#" insert or replace into sample(id,name) values ($1,$2) returning * "#,
         )
@@ -73,6 +73,35 @@ impl CrudRepository<Sample, i64> for SampleRepositoryDB {
             .bind(id)
             .execute(&self.pool)
             .await?;
+        Ok(())
+    }
+
+    async fn find_all_by_id(&self, ids: Vec<i64>) -> diagnostics::Result<Vec<Sample>> {
+        let mut query_builder: QueryBuilder<DataBase> =
+            QueryBuilder::new("select * from sample where id in (");
+        let mut separated = query_builder.separated(", ");
+        for id in ids.iter() {
+            separated.push_bind(id);
+        }
+        separated.push_unseparated(") ");
+        Ok(query_builder
+            .build_query_as::<Sample>()
+            .fetch_all(&self.pool)
+            .await?)
+    }
+
+    async fn delete_all_by_id(&self, ids: Vec<i64>) -> diagnostics::Result<()> {
+        let mut query_builder: QueryBuilder<DataBase> =
+            QueryBuilder::new("delete from sample where id in (");
+        let mut separated = query_builder.separated(", ");
+        ids.iter().for_each(|id| {
+            separated.push_bind(id);
+        });
+        // for id in ids.iter() {
+        //     separated.push_bind(id);
+        // }
+        separated.push_unseparated(") ");
+        query_builder.build().execute(&self.pool).await?;
         Ok(())
     }
 }

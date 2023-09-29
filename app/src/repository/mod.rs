@@ -1,5 +1,5 @@
+pub(crate) mod basic_repository;
 pub(crate) mod sample_repository;
-pub(crate) mod sample_repository_impl;
 
 use axum::{
     async_trait,
@@ -8,28 +8,6 @@ use axum::{
 };
 
 use crate::diagnostics;
-
-#[async_trait]
-pub(crate) trait CrudRepository<EntityT, IdT> {
-    async fn add(&self, entity: EntityT) -> diagnostics::Result<EntityT>;
-
-    async fn find_all(&self) -> diagnostics::Result<Vec<EntityT>>;
-    async fn find_by_id(&self, id: &'_ IdT) -> diagnostics::Result<EntityT>;
-
-    async fn save(&self, entity: EntityT) -> diagnostics::Result<EntityT>;
-
-    async fn delete(&self, entity: EntityT) -> diagnostics::Result<()>;
-    async fn delete_all(&self) -> diagnostics::Result<()>;
-    async fn delete_by_id(&self, id: &'_ IdT) -> diagnostics::Result<()>;
-
-    // async fn delete_all_by_id<'a, I>(&self, ids: IntoIterator)
-    // where
-    //     I: Iterator<Item = &IdT>;
-    // async fn find_all_by_id(
-    //     &self,
-    //     ids: &'_ impl Iterator<Item = &'_ IdT>,
-    // ) -> diagnostics::Result<Vec<EntityT>>;
-}
 
 pub(crate) struct Repository<T>(pub T);
 
@@ -46,4 +24,5 @@ where
     }
 }
 
+pub(crate) use basic_repository::BasicRepository;
 pub(crate) use self::sample_repository::{SampleRepository, SampleRepositoryDB};

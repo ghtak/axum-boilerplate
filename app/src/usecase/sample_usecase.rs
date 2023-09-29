@@ -19,8 +19,8 @@ where
         Ok(samples)
     }
 
-    pub async fn save(&self, sample: Sample) -> diagnostics::Result<Sample> {
-        let sample = self.sample_repository.save(sample).await?;
+    pub async fn create(&self, sample: Sample) -> diagnostics::Result<Sample> {
+        let sample = self.sample_repository.create(sample).await?;
         Ok(sample)
     }
 }

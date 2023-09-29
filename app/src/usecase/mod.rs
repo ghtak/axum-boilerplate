@@ -1,4 +1,4 @@
-mod basic_sample_usecase;
+mod sample_usecase;
 
 use axum::{
     async_trait,
@@ -23,6 +23,6 @@ where
     }
 }
 
-pub(crate) use self::basic_sample_usecase::BasicSampleUsecase;
+pub(crate) use self::sample_usecase::BasicSampleUsecase;
 // user custom exports
 pub(crate) type SampleUsecase = BasicSampleUsecase<SampleRepositoryDB>;

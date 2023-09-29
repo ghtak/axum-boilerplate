@@ -5,7 +5,7 @@ use crate::{
     app_state::AppState,
     diagnostics, dto,
     entity::Sample,
-    repository::{Repository, SampleRepositoryDB, CrudRepository},
+    repository::{Repository, SampleRepositoryDB, BasicRepository},
     usecase::{SampleUsecase, Usecase},
 };
 
@@ -20,8 +20,8 @@ async fn create_sample(
     WithRejection(Json(v), _): WithRejection<Json<dto::SampleCreate>, diagnostics::Error>,
 ) -> diagnostics::Result<Json<Sample>> {
     let repo = SampleRepositoryDB::new(app_state.db_pool.clone());
-    let samples = repo.save(Sample::from_name(v.name)).await?;
-    Ok(Json(samples))
+    let sample = repo.create(Sample::from_name(v.name)).await?;
+    Ok(Json(sample))
 }
 
 async fn get_samples_v2(
@@ -35,7 +35,7 @@ async fn create_sample_v2(
     Repository(sample_repo): Repository<SampleRepositoryDB>,
     WithRejection(Json(v), _): WithRejection<Json<dto::SampleCreate>, diagnostics::Error>,
 ) -> diagnostics::Result<Json<Sample>> {
-    let samples = sample_repo.save(Sample::from_name(v.name)).await?;
+    let samples = sample_repo.create(Sample::from_name(v.name)).await?;
     Ok(Json(samples))
 }
 
@@ -50,7 +50,7 @@ async fn create_sample_v3(
     Usecase(sample_usecase): Usecase<SampleUsecase>,
     WithRejection(Json(v), _): WithRejection<Json<dto::SampleCreate>, diagnostics::Error>,
 ) -> diagnostics::Result<Json<Sample>> {
-    let sample = sample_usecase.save(Sample::from_name(v.name)).await?;
+    let sample = sample_usecase.create(Sample::from_name(v.name)).await?;
     Ok(Json(sample))
 }
 
