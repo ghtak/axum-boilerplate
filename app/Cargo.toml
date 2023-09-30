@@ -24,3 +24,4 @@ anyhow = "1.0.75"
 toml = "0.8.0"
 thiserror = "1.0.48"
 sqlx = { version = "0.7", features = [ "runtime-tokio", "tls-rustls", "postgres", "json", "sqlite"] }
+async-trait = "0.1.73"

@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use super::Entity;
+
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Sample {
     pub id: i64,
@@ -16,5 +18,13 @@ impl Sample {
 
     pub fn new(id: i64, name: String) -> Self {
         Sample { id, name }
+    }
+}
+
+impl Entity for Sample{
+    type ID = i64;
+    
+    fn get_id(&self) -> &Self::ID{
+        &self.id
     }
 }

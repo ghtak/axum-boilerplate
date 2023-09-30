@@ -6,7 +6,7 @@ use tokio::sync::RwLock;
 use crate::{
     app_state::AppState,
     diagnostics,
-    entity::Sample,
+    entity::{Sample, Entity},
     repository::{BasicRepository, SampleRepository, SampleRepositoryDB},
     usecase::BasicSampleUsecase,
     utils,
@@ -25,7 +25,7 @@ impl SampleRepositoryMap {
 }
 
 #[async_trait]
-impl BasicRepository<Sample, i64> for SampleRepositoryMap {
+impl BasicRepository<Sample> for SampleRepositoryMap {
     async fn create(&self, entity: Sample) -> diagnostics::Result<Sample> {
         let mut g = self.map.write().await;
         let map = g.borrow_mut();
@@ -62,10 +62,6 @@ impl BasicRepository<Sample, i64> for SampleRepositoryMap {
         Ok(Sample::new(entity.id, entity.name))
     }
 
-    async fn delete(&self, entity: Sample) -> diagnostics::Result<()> {
-        Ok(self.delete_by_id(&entity.id).await?)
-    }
-
     async fn delete_all(&self) -> diagnostics::Result<()> {
         let mut g = self.map.write().await;
         let map = g.borrow_mut();
@@ -80,13 +76,61 @@ impl BasicRepository<Sample, i64> for SampleRepositoryMap {
         Ok(())
     }
 
-    async fn find_all_by_id(&self, _ids: Vec<i64>) -> diagnostics::Result<Vec<Sample>>{
-        Err(diagnostics::Error::RowNotFound)
+    async fn find_all_by_id<I>(&self, ids: I) -> diagnostics::Result<Vec<Sample>>
+    where
+        I: Iterator<Item = &'async_trait <Sample as Entity>::ID> + Send,
+        <Sample as Entity>::ID: 'async_trait,
+    {
+        let map = self.map.read().await;
+        let samples = ids
+            .filter_map(|id| {
+                if let Some(name) = map.get(&id) {
+                    Some(Sample::new(id.clone(), name.clone()))
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<Sample>>();
+        Ok(samples)
     }
 
-    async fn delete_all_by_id(&self, _ids: Vec<i64>) -> diagnostics::Result<()>{
+    async fn delete_all_by_id<I>(&self, ids: I) -> diagnostics::Result<()>
+    where
+        I: Iterator<Item = &'async_trait <Sample as Entity>::ID> + Send,
+        <Sample as Entity>::ID: 'async_trait,
+    {
+        let mut g = self.map.write().await;
+        let map = g.borrow_mut();
+        ids.for_each(|x| {
+            map.remove(x);
+        });
         Ok(())
     }
+
+    // async fn find_all_by_id<I>(&self, ids: I) -> diagnostics::Result<Vec<Sample>>
+    // where
+    //     I: IntoIterator<Item = i64> + Send + 'async_trait,
+    // {
+    //     let map = self.map.read().await;
+    //     let samples = ids
+    //         .into_iter()
+    //         .filter_map(|id| {
+    //             if let Some(name) = map.get(&id) {
+    //                 Some(Sample::new(id.clone(), name.clone()))
+    //             } else {
+    //                 None
+    //             }
+    //         })
+    //         .collect::<Vec<Sample>>();
+    //     Ok(samples)
+    // }
+
+    // async fn delete_all_by_id<I>(&self, _ids: I) -> diagnostics::Result<()>
+    // where
+    //     I: IntoIterator<Item = i64> + Send + 'async_trait,
+    // {
+    //     Err(diagnostics::Error::NotImplemented)
+    // }
 }
 
 #[async_trait]
@@ -104,19 +148,20 @@ async fn sample_usecase() {
     let _guard = utils::tracing::init(&config.tracing).unwrap();
     let app_state = AppState::new(&config).await;
     let _ = app_state.create_tables().await;
-    let _ = BasicSampleUsecase::<SampleRepositoryDB>::new(SampleRepositoryDB::new(
-        app_state.db_pool.clone(),
-    ));
-    let sample_usecase_impl =
-        BasicSampleUsecase::<SampleRepositoryMap>::new(SampleRepositoryMap::new());
+
+    let _ = BasicSampleUsecase::<SampleRepositoryDB>::from_ref(&app_state);
+    let sample_usecase_impl = BasicSampleUsecase::<SampleRepositoryMap>::from_ref(&app_state);
     let s = sample_usecase_impl
         .create(Sample::with_name("s".into()))
         .await;
-    let _s1 = sample_usecase_impl
+    let s1 = sample_usecase_impl
         .create(Sample::with_name("s1".into()))
         .await;
-    
-    println!("{:?}", s);
+    let v = vec![0, 1,2,3];
+    let samples = sample_usecase_impl.sample_repository.find_all_by_id(v.iter()).await;
+
+    println!("{:?} {:?} {:?}", s, s1, samples);
+    let _ = sample_usecase_impl.sample_repository.delete_all_by_id(vec![0].iter()).await;
     let samples = sample_usecase_impl.find_all().await;
     println!("samples {:?}", samples);
 }
