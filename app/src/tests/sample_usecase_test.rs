@@ -9,7 +9,7 @@ use crate::{
     entity::{Sample, Entity},
     repository::{BasicRepository, SampleRepository, SampleRepositoryDB},
     usecase::BasicSampleUsecase,
-    utils,
+    util,
 };
 
 struct SampleRepositoryMap {
@@ -144,8 +144,8 @@ impl FromRef<AppState> for SampleRepositoryMap {
 
 #[tokio::test]
 async fn sample_usecase() {
-    let config = utils::config::TomlConfig::from_file("config.toml").unwrap();
-    let _guard = utils::tracing::init(&config.tracing).unwrap();
+    let config = util::config::TomlConfig::from_file("config.toml").unwrap();
+    let _guard = util::tracing::init(&config.tracing).unwrap();
     let app_state = AppState::new(&config).await;
     let _ = app_state.create_tables().await;
 

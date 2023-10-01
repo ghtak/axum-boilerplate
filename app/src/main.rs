@@ -11,8 +11,10 @@ mod dto;
 mod entity;
 mod repository;
 mod router;
-mod utils;
+mod util;
 mod usecase;
+mod define;
+
 
 #[cfg(test)]
 mod tests;
@@ -21,8 +23,8 @@ mod tests;
 #[tokio::main]
 async fn main() {
     println!("{:?}", env::current_dir().unwrap());
-    let config = utils::config::TomlConfig::from_file("config.toml").unwrap();
-    let _guard = utils::tracing::init(&config.tracing).unwrap();
+    let config = util::config::TomlConfig::from_file("config.toml").unwrap();
+    let _guard = util::tracing::init(&config.tracing).unwrap();
     tracing::trace!("{config:?}");
     let app_state = AppState::new(&config).await;
     let _ = app_state.create_tables().await;

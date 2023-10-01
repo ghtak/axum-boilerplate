@@ -10,7 +10,7 @@ use tower_http::{
     services::ServeDir,
 };
 
-use crate::{app_state::AppState, diagnostics::Error, utils::config::HttpConfig};
+use crate::{app_state::AppState, diagnostics::Error, util::{config::HttpConfig, middleware}};
 
 pub(crate) fn init_router(app_state: AppState, config: &HttpConfig) -> Router {
     let static_serv_service = {
@@ -24,10 +24,12 @@ pub(crate) fn init_router(app_state: AppState, config: &HttpConfig) -> Router {
         .nest("/v1/sample", v1::sample_router::router())
         .layer(cors())
         .layer(DefaultBodyLimit::max(10 * 1024 * 1024))
+        .layer(axum::middleware::map_response(middleware::response_map))
         .fallback_service(static_serv_service)
         .with_state(app_state)
 }
 
+// #todo from config
 pub(crate) fn cors() -> CorsLayer {
     CorsLayer::new()
         //.allow_credentials(true)

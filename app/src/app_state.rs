@@ -1,7 +1,7 @@
 use axum::extract::FromRef;
 use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, Sqlite, Pool};
 
-use crate::{diagnostics, utils::config::TomlConfig};
+use crate::{diagnostics, util::config::TomlConfig};
 
 pub type DataBase = Sqlite;
 

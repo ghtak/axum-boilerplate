@@ -30,7 +30,7 @@ impl ConfigStringToValue for String {
     }
 }
 
-pub(crate) fn init(config: &crate::utils::config::TracingConfig) -> anyhow::Result<WorkerGuard> {
+pub(crate) fn init(config: &crate::util::config::TracingConfig) -> anyhow::Result<WorkerGuard> {
     let app_name = module_path!().split("::").next().unwrap().to_owned();
 
     // create non blocking file writer

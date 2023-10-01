@@ -1,12 +1,16 @@
-
 use axum::{
-    extract::{rejection::{JsonRejection, PathRejection}, multipart::MultipartError},
+    extract::{
+        multipart::MultipartError,
+        rejection::{JsonRejection, PathRejection},
+    },
     response::IntoResponse,
     Json,
 };
 use hyper::StatusCode;
 use serde_json::json;
 use thiserror::Error;
+
+use crate::define;
 
 pub(crate) type Result<T> = core::result::Result<T, Error>;
 
@@ -53,14 +57,14 @@ impl From<sqlx::Error> for Error {
     fn from(value: sqlx::Error) -> Self {
         match value {
             sqlx::Error::RowNotFound => Error::RowNotFound,
-            _ => Error::SqlXError(value)
+            _ => Error::SqlXError(value),
         }
     }
 }
 
 impl IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
-        match self {
+        let mut res = match self {
             Error::JsonResponse { code, json } => (code, Json(json)).into_response(),
             Error::JsonRejection(err) => (
                 StatusCode::BAD_REQUEST,
@@ -78,7 +82,12 @@ impl IntoResponse for Error {
                 Json(json!({ "message": format!("{:?}", self) })),
             )
                 .into_response(),
-        }
+        };
+        res.headers_mut().insert(
+            define::CUSTOM_HEADER_IS_DIAGNOSTICS_ERROR,
+            "true".parse().unwrap(),
+        );
+        res
     }
 }
 
