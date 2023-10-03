@@ -8,9 +8,14 @@ use hyper::{header, Method, Uri};
 use tower_http::{
     cors::{Any, CorsLayer},
     services::ServeDir,
+    //    trace::{DefaultMakeSpan, TraceLayer},
 };
 
-use crate::{app_state::AppState, diagnostics::Error, util::{config::HttpConfig, middleware}};
+use crate::{
+    app_state::AppState,
+    diagnostics::Error,
+    util::{config::HttpConfig, middleware},
+};
 
 pub(crate) fn init_router(app_state: AppState, config: &HttpConfig) -> Router {
     let static_serv_service = {
@@ -18,13 +23,22 @@ pub(crate) fn init_router(app_state: AppState, config: &HttpConfig) -> Router {
             .not_found_service((|_uri: Uri| async move { Error::NotFound }).into_service())
     };
 
-    Router::new()
+    let router = Router::new()
         //.merge(basic::router(app_state.clone()))
         .nest("/basic", basic::router())
-        .nest("/v1/sample", v1::sample_router::router())
+        .nest("/v1/sample", v1::sample_router::router());
+
+    #[cfg(feature = "enable_websocket_pubsub_sample")]
+    let router = router.nest("/ws", crate::ws::pubsub::router());
+
+    router
         .layer(cors())
         .layer(DefaultBodyLimit::max(10 * 1024 * 1024))
         .layer(axum::middleware::map_response(middleware::response_map))
+        // .layer(
+        //     TraceLayer::new_for_http()
+        //         .make_span_with(DefaultMakeSpan::default().include_headers(true)),
+        // )
         .fallback_service(static_serv_service)
         .with_state(app_state)
 }

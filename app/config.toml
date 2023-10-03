@@ -22,7 +22,7 @@ with_line_number = true
 with_target = false
 
 [tracing.console]
-app_only = true
+app_only = false
 with_max_level = "TRACE"
 with_file = false
 with_line_number = false

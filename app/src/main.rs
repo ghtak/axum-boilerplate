@@ -6,19 +6,20 @@ use app_state::AppState;
 use tokio;
 
 mod app_state;
+mod define;
 mod diagnostics;
 mod dto;
 mod entity;
 mod repository;
 mod router;
-mod util;
 mod usecase;
-mod define;
+mod util;
 
+#[cfg(feature = "enable_websocket_pubsub_sample")]
+mod ws;
 
 #[cfg(test)]
 mod tests;
-
 
 #[tokio::main]
 async fn main() {

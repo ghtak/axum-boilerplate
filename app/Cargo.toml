@@ -25,3 +25,16 @@ toml = "0.8.0"
 thiserror = "1.0.48"
 sqlx = { version = "0.7", features = [ "runtime-tokio", "tls-rustls", "postgres", "json", "sqlite"] }
 async-trait = "0.1.73"
+futures = "0.3.28"
+
+[dependencies.uuid]
+version = "1.4.1"
+features = [
+    "v4",                # Lets you generate random UUIDs
+    "fast-rng",          # Use a faster (but still sufficiently random) RNG
+    "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
+]
+
+[features]
+default = ["enable_websocket_pubsub_sample"]
+enable_websocket_pubsub_sample = []
