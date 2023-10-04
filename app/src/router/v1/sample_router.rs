@@ -5,7 +5,7 @@ use crate::{
     app_state::AppState,
     diagnostics, dto,
     entity::Sample,
-    repository::{Repository, SampleRepositoryDB, BasicRepository},
+    repository::{BasicRepository, Repository, SampleRepositoryDB},
     usecase::{SampleUsecase, Usecase},
 };
 
@@ -60,6 +60,9 @@ pub(crate) fn router_(app_state: AppState) -> Router {
         .with_state(app_state)
 }
 
-pub(crate) fn router() -> Router<AppState> {
-    Router::new().route("/", get(get_samples_v3).post(create_sample_v3))
+pub(crate) fn router(path: &'_ str) -> Router<AppState> {
+    Router::new().route(
+        path,
+        get(get_samples_v3).post(create_sample_v3),
+    )
 }

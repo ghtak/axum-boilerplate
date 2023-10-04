@@ -226,6 +226,9 @@ async fn ws_handler(ws: WebSocketUpgrade, State(state): State<AppState>) -> impl
 }
 
 #[cfg(feature = "enable_websocket_pubsub_sample")]
-pub(crate) fn router() -> Router<AppState> {
-    Router::new().route("/", get(ws_handler))
+pub(crate) fn router(path: &'_ str) -> Router<AppState> {
+    //let prefix: String = prefix.into();
+    //Router::new().route((prefix + "/").as_str(), get(ws_handler))
+    //Router::new().route([path, "/"].join("").as_str(), get(ws_handler))
+    Router::new().route(path, get(ws_handler))
 }
