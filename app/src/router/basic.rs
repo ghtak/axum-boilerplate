@@ -186,17 +186,40 @@ pub(crate) fn router_(app_state: AppState) -> Router {
 pub(crate) fn router(path: &'_ str) -> Router<AppState> {
     Router::new()
         .route(path, axum::routing::get(index))
-        .route([path, "/error"].join("").as_str(), axum::routing::get(error))
-        .route([path, "/state"].join("").as_str(), axum::routing::get(state))
-        .route([path, "/cookie"].join("").as_str(), axum::routing::get(cookie))
-        .route([path, "/json_value"].join("").as_str(), axum::routing::post(json_value))
-        .route([path, "/path/:id"].join("").as_str(), axum::routing::get(path_fn))
-        //.route("/path/:a/:b", axum::routing::get(path_v2))
-        .route([path, "/path/:a/:b"].join("").as_str(), axum::routing::get(path_v3))
-        .route([path, "/query"].join("").as_str(), axum::routing::get(query))
+        .route(
+            [path, "/error"].join("").as_str(),
+            axum::routing::get(error),
+        )
+        .route(
+            [path, "/state"].join("").as_str(),
+            axum::routing::get(state),
+        )
+        .route(
+            [path, "/cookie"].join("").as_str(),
+            axum::routing::get(cookie),
+        )
+        .route(
+            [path, "/json_value"].join("").as_str(),
+            axum::routing::post(json_value),
+        )
+        .route(
+            [path, "/path/:id"].join("").as_str(),
+            axum::routing::get(path_fn),
+        )
+        .route(
+            [path, "/path/:a/:b"].join("").as_str(),
+            axum::routing::get(path_v3),
+        )
+        .route(
+            [path, "/query"].join("").as_str(),
+            axum::routing::get(query),
+        )
         .route(
             [path, "/multipart"].join("").as_str(),
             axum::routing::get(multipart_get).post(multipart_post),
         )
-        .route([path, "/tree/*path"].join("").as_str(), axum::routing::get(tree))
+        .route(
+            [path, "/tree/*path"].join("").as_str(),
+            axum::routing::get(tree),
+        )
 }
