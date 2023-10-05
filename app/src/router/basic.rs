@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use axum::extract::{Multipart, Path, Query};
 use axum::response::{Html, IntoResponse};
+use axum::routing::{post, get};
 use axum::{extract::State, Router};
 use axum::{Json, TypedHeader};
 use axum_extra::extract::cookie::Cookie;
@@ -166,60 +167,33 @@ async fn tree(
 
 pub(crate) fn router_(app_state: AppState) -> Router {
     Router::new()
-        .route("/", axum::routing::get(index))
-        .route("/error", axum::routing::get(error))
-        .route("/state", axum::routing::get(state))
-        .route("/cookie", axum::routing::get(cookie))
-        .route("/json_value", axum::routing::post(json_value))
-        .route("/path/:id", axum::routing::get(path_fn))
-        //.route("/path/:a/:b", axum::routing::get(path_v2))
-        .route("/path/:a/:b", axum::routing::get(path_v3))
-        .route("/query", axum::routing::get(query))
-        .route(
-            "/multipart",
-            axum::routing::get(multipart_get).post(multipart_post),
-        )
-        .route("/tree/*path", axum::routing::get(tree))
+        .route("/", get(index))
+        .route("/error", get(error))
+        .route("/state", get(state))
+        .route("/cookie", get(cookie))
+        .route("/json_value", post(json_value))
+        .route("/path/:id", get(path_fn))
+        //.route("/path/:a/:b", get(path_v2))
+        .route("/path/:a/:b", get(path_v3))
+        .route("/query", get(query))
+        .route("/multipart", get(multipart_get).post(multipart_post))
+        .route("/tree/*path", get(tree))
         .with_state(app_state)
 }
 
 pub(crate) fn router(path: &'_ str) -> Router<AppState> {
     Router::new()
-        .route(path, axum::routing::get(index))
+        .route(path, get(index))
+        .route(format!("{path}/error").as_str(), get(error))
+        .route(format!("{path}/state").as_str(), get(state))
+        .route(format!("{path}/cookie").as_str(), get(cookie))
+        .route(format!("{path}/json_value").as_str(), post(json_value))
+        .route(format!("{path}/path/:id").as_str(), get(path_fn))
+        .route(format!("{path}/path/:a/:b").as_str(), get(path_v3))
+        .route(format!("{path}/query").as_str(), get(query))
         .route(
-            [path, "/error"].join("").as_str(),
-            axum::routing::get(error),
+            format!("{path}/multipart").as_str(),
+            get(multipart_get).post(multipart_post),
         )
-        .route(
-            [path, "/state"].join("").as_str(),
-            axum::routing::get(state),
-        )
-        .route(
-            [path, "/cookie"].join("").as_str(),
-            axum::routing::get(cookie),
-        )
-        .route(
-            [path, "/json_value"].join("").as_str(),
-            axum::routing::post(json_value),
-        )
-        .route(
-            [path, "/path/:id"].join("").as_str(),
-            axum::routing::get(path_fn),
-        )
-        .route(
-            [path, "/path/:a/:b"].join("").as_str(),
-            axum::routing::get(path_v3),
-        )
-        .route(
-            [path, "/query"].join("").as_str(),
-            axum::routing::get(query),
-        )
-        .route(
-            [path, "/multipart"].join("").as_str(),
-            axum::routing::get(multipart_get).post(multipart_post),
-        )
-        .route(
-            [path, "/tree/*path"].join("").as_str(),
-            axum::routing::get(tree),
-        )
+        .route(format!("{path}/tree/*path").as_str(), get(tree))
 }
