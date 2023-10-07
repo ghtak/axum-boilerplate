@@ -13,7 +13,7 @@ pub(crate) struct TomlConfig {
 pub(crate) struct HttpConfig {
     pub(crate) host: String,
     pub(crate) port: u16,
-    pub(crate) static_directory: String
+    pub(crate) static_directory: String,
 }
 
 impl HttpConfig {
@@ -25,21 +25,10 @@ impl HttpConfig {
 
 #[derive(Deserialize, Debug)]
 pub(crate) struct DatabaseConfig {
-    pub(crate) name: String,
-    pub(crate) host: String,
-    pub(crate) port: u16,
-    pub(crate) user: String,
-    pub(crate) password: String,
-    pub(crate) max_connection: u32
-}
+    pub(crate) url: String,
+    pub(crate) max_connection: u32,
+    pub(crate) migrations: String,
 
-impl DatabaseConfig {
-    pub(crate) fn url(&self) -> String {
-        format!(
-            "postgresql://{}:{}@{}:{}/{}",
-            self.user, self.password, self.host, self.port, self.name
-        )
-    }
 }
 
 #[derive(Deserialize, Debug)]

@@ -1,3 +1,4 @@
+use std::env;
 use std::sync::Arc;
 
 use axum::{extract::FromRef, http::Extensions};
@@ -30,39 +31,31 @@ pub(crate) struct AppState {
 }
 
 impl AppState {
-    pub async fn create_tables(&self) -> diagnostics::Result<()> {
-        sqlx::query(
-            r#"CREATE TABLE IF NOT EXISTS sample(
-                id INTEGER PRIMARY KEY AUTOINCREMENT ,
-                name text)"#,
-        )
-        .execute(&self.db_pool)
-        .await?;
-        Ok(())
-    }
-
+    #[cfg(feature = "dbtype_sqlite")]
     pub async fn new(config: &TomlConfig) -> Self {
-        #[cfg(feature = "dbtype_sqlite")]
-        if !Sqlite::database_exists("./sqlite.db")
-            .await
-            .unwrap_or(false)
-        {
-            println!("Creating database {}", "./sqlite.db");
-            match Sqlite::create_database("./sqlite.db").await {
-                Ok(_) => println!("Create db success"),
+        assert!(
+            config.database.url.starts_with("sqlite://"),
+            "invalid database url scheme"
+        );
+        let filename = config.database.url.replace("sqlite://", "");
+        if !Sqlite::database_exists(&filename).await.unwrap_or(false) {
+            match Sqlite::create_database(&filename).await {
+                Ok(_) => tracing::debug!("Create db success"),
                 Err(error) => panic!("error: {}", error),
             }
         } else {
-            println!("Database already exists");
+            tracing::debug!("Database already exists");
         }
-
+        env::set_var("DATABASE_URL", config.database.url.as_str());
         AppState {
             db_pool: SqlitePoolOptions::new()
                 .max_connections(config.database.max_connection)
-                .connect("./sqlite.db")
+                .connect(config.database.url.as_str())
                 .await
                 .expect("Unabled to Connect to Database"),
+
             extentions: Arc::new(RwLock::new(Extensions::default())),
+
             #[cfg(feature = "enable_websocket_pubsub_sample")]
             pubsub: PubSubState::new(),
         }
@@ -70,10 +63,15 @@ impl AppState {
 
     #[cfg(feature = "dbtype_postgres")]
     pub async fn new(config: &TomlConfig) -> Self {
+        assert!(
+            config.database.url.starts_with("postgres://"),
+            "invalid database url scheme"
+        );
+        env::set_var("DATABASE_URL", config.database.url.as_str());
         AppState {
             db_pool: PgPoolOptions::new()
                 .max_connections(config.database.max_connection)
-                .connect(config.database.url().as_str())
+                .connect(config.database.url.as_str())
                 .await
                 .expect("Unabled to Connect to Database"),
 
@@ -82,6 +80,11 @@ impl AppState {
             #[cfg(feature = "enable_websocket_pubsub_sample")]
             pubsub: PubSubState::new(),
         }
+    }
+
+    pub async fn migrate_database(&self) -> diagnostics::Result<()> {
+        sqlx::migrate!("./migrations").run(&self.db_pool).await?;
+        Ok(())
     }
 }
 

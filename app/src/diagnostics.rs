@@ -31,6 +31,9 @@ pub enum Error {
     #[error(transparent)]
     SqlXError(sqlx::Error),
 
+    #[error(transparent)]
+    SqlXMigrateError(#[from] sqlx::migrate::MigrateError),
+
     #[error("RowNotFound")]
     RowNotFound,
 

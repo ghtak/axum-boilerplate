@@ -4,11 +4,8 @@ port = 18089
 static_directory = "./static"
 
 [database]
-name = "axum-boilerplate"
-host = "0.0.0.0"
-port = 18089
-user = "sa"
-password = "sa"
+url = "sqlite://sqlite.db"
+# url = "postgres://sa:sa@0.0.0.0:18089/axum-boilerplate"
 max_connection = 8
 
 [tracing.rolling_file]

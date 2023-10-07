@@ -42,7 +42,8 @@ features = [
 ]
 
 [features]
-default = ["enable_websocket_pubsub_sample", "dbtype_sqlite"]
+default = ["enable_websocket_pubsub_sample", "enable_grpc_sample", "dbtype_sqlite"]
 enable_websocket_pubsub_sample = []
+enable_grpc_sample = []
 dbtype_sqlite = []
 dbtype_postgres = []
