@@ -5,6 +5,8 @@ use std::env;
 use app_state::AppState;
 use tokio;
 
+use crate::proto::{voting::VotingService, MultiplexService};
+
 mod app_state;
 mod define;
 mod diagnostics;
@@ -14,6 +16,7 @@ mod repository;
 mod router;
 mod usecase;
 mod util;
+mod proto;
 
 #[cfg(feature = "enable_websocket_pubsub_sample")]
 mod ws;
@@ -29,12 +32,31 @@ async fn main() {
     tracing::trace!("{config:?}");
     let app_state = AppState::new(&config).await;
     let _ = app_state.create_tables().await;
-    let router = router::init_router(app_state, &config.http);
+    // let rest = router::init_router(app_state, &config.http);
+    // let address = config.http.socket_addr().unwrap();
+    // axum::Server::bind(&address)
+    //     .serve(rest.into_make_service())
+    //     .await
+    //     .unwrap()
+
+    let rest = router::init_router(app_state, &config.http);
+    let reflection_service = tonic_reflection::server::Builder::configure()
+        .register_encoded_file_descriptor_set(proto::FILE_DESCRIPTOR_SET)
+        .build()
+        .unwrap();
+
+    let grpc = tonic::transport::Server::builder()
+        .add_service(reflection_service)
+        .add_service(proto::voting::voting_server::VotingServer::new(VotingService::default()))
+        .into_service();
+
+    let service = MultiplexService::new(rest, grpc);
     let address = config.http.socket_addr().unwrap();
-    axum::Server::bind(&address)
-        .serve(router.into_make_service())
+    tracing::debug!("listening on {address}");
+    hyper::Server::bind(&address)
+        .serve(tower::make::Shared::new(service))
         .await
-        .unwrap()
+        .unwrap();
 }
 
 // fn main() {

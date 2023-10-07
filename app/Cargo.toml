@@ -26,6 +26,12 @@ thiserror = "1.0.48"
 sqlx = { version = "0.7", features = [ "runtime-tokio", "tls-rustls", "postgres", "json", "sqlite"] }
 async-trait = "0.1.73"
 futures = "0.3.28"
+tonic = "0.10.2"
+prost = "0.12.1"
+tonic-reflection = "0.10.2"
+
+[build-dependencies]
+tonic-build = "0.10.2"
 
 [dependencies.uuid]
 version = "1.4.1"
@@ -36,5 +42,7 @@ features = [
 ]
 
 [features]
-default = ["enable_websocket_pubsub_sample"]
+default = ["enable_websocket_pubsub_sample", "dbtype_sqlite"]
 enable_websocket_pubsub_sample = []
+dbtype_sqlite = []
+dbtype_postgres = []
