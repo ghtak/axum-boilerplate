@@ -27,8 +27,7 @@ impl HttpConfig {
 pub(crate) struct DatabaseConfig {
     pub(crate) url: String,
     pub(crate) max_connection: u32,
-    pub(crate) migrations: String,
-
+    pub(crate) with_migrations: bool,
 }
 
 #[derive(Deserialize, Debug)]

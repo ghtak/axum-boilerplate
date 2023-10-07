@@ -27,11 +27,15 @@ mod tests;
 
 #[tokio::main]
 async fn main() {
-    let config = util::config::TomlConfig::from_file("config.toml").unwrap();
+    let config = util::config::TomlConfig::from_file("app_config_local.toml").unwrap();
     let _guard = util::tracing::init(&config.tracing).unwrap();
     tracing::trace!("{config:?}");
     let app_state = AppState::new(&config).await;
-    let _ = app_state.migrate_database().await;
+    if config.database.with_migrations {
+        if let Err(e) = app_state.migrate_database().await {
+            tracing::error!("{e:?}");
+        }
+    }
     run(app_state, config).await;
 }
 

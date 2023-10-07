@@ -7,6 +7,7 @@ static_directory = "./static"
 url = "sqlite://sqlite.db"
 # url = "postgres://sa:sa@0.0.0.0:18089/axum-boilerplate"
 max_connection = 8
+with_migrations = true
 
 [tracing.rolling_file]
 directory = "./logs"
