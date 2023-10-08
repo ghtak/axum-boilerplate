@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use axum::extract::{Multipart, Path, Query};
 use axum::response::{Html, IntoResponse};
-use axum::routing::{post, get};
+use axum::routing::{get, post};
 use axum::{extract::State, Router};
 use axum::{Json, TypedHeader};
 use axum_extra::extract::cookie::Cookie;
@@ -11,7 +11,7 @@ use hyper::StatusCode;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-use crate::app_state::AppState;
+use crate::app_state::{AppState, RedisConnection};
 use crate::diagnostics::{self, Error, Result};
 
 async fn index() -> &'static str {
@@ -165,6 +165,45 @@ async fn tree(
     format!("Path : {}", path)
 }
 
+async fn redis_ping(RedisConnection(mut conn): RedisConnection) -> impl IntoResponse {
+    let replay: String = bb8_redis::redis::cmd("PING")
+        .query_async(&mut *conn)
+        .await
+        .unwrap();
+    replay
+}
+
+#[derive(Deserialize, Debug)]
+struct RedisKV {
+    key: String,
+    value: String,
+}
+
+async fn redis_set(
+    RedisConnection(mut conn): RedisConnection,
+    WithRejection(Path(param), _): WithRejection<Path<RedisKV>, diagnostics::Error>,
+) -> diagnostics::Result<()> {
+    bb8_redis::redis::cmd("SET")
+        .arg(param.key)
+        .arg(param.value)
+        .query_async(&mut *conn)
+        .await
+        .map_err(|e| diagnostics::Error::BB8Error(e.to_string()))?;
+    Ok(())
+}
+
+async fn redis_get(
+    RedisConnection(mut conn): RedisConnection,
+    WithRejection(Path(key), _): WithRejection<Path<String>, diagnostics::Error>,
+) -> diagnostics::Result<String> {
+    let value: String = bb8_redis::redis::cmd("GET")
+        .arg(key)
+        .query_async(&mut *conn)
+        .await
+        .map_err(|e| diagnostics::Error::BB8Error(e.to_string()))?;
+    Ok(value)
+}
+
 pub(crate) fn router_(app_state: AppState) -> Router {
     Router::new()
         .route("/", get(index))
@@ -181,19 +220,19 @@ pub(crate) fn router_(app_state: AppState) -> Router {
         .with_state(app_state)
 }
 
-pub(crate) fn router(path: &'_ str) -> Router<AppState> {
+pub(crate) fn router() -> Router<AppState> {
     Router::new()
-        .route(path, get(index))
-        .route(format!("{path}/error").as_str(), get(error))
-        .route(format!("{path}/state").as_str(), get(state))
-        .route(format!("{path}/cookie").as_str(), get(cookie))
-        .route(format!("{path}/json_value").as_str(), post(json_value))
-        .route(format!("{path}/path/:id").as_str(), get(path_fn))
-        .route(format!("{path}/path/:a/:b").as_str(), get(path_v3))
-        .route(format!("{path}/query").as_str(), get(query))
-        .route(
-            format!("{path}/multipart").as_str(),
-            get(multipart_get).post(multipart_post),
-        )
-        .route(format!("{path}/tree/*path").as_str(), get(tree))
+        .route("/api/basic", get(index))
+        .route("/api/basic/error", get(error))
+        .route("/api/basic/state", get(state))
+        .route("/api/basic/cookie", get(cookie))
+        .route("/api/basic/json_value", post(json_value))
+        .route("/api/basic/path/:id", get(path_fn))
+        .route("/api/basic/path/:a/:b", get(path_v3))
+        .route("/api/basic/query", get(query))
+        .route("/api/basic/multipart", get(multipart_get).post(multipart_post))
+        .route("/api/basic/tree/*path", get(tree))
+        .route("/api/basic/redis/ping", get(redis_ping))
+        .route("/api/basic/redis/:key/:value", get(redis_set))
+        .route("/api/basic/redis/:key", get(redis_get))
 }

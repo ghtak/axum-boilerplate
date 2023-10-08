@@ -219,16 +219,14 @@ async fn pubsub_handler(websocket: WebSocket, state: PubSubState) {
     }
 }
 
-#[cfg(feature = "enable_websocket_pubsub_sample")]
 async fn ws_handler(ws: WebSocketUpgrade, State(state): State<AppState>) -> impl IntoResponse {
     let s = state.pubsub.clone();
     ws.on_upgrade(move |socket| pubsub_handler(socket, s))
 }
 
-#[cfg(feature = "enable_websocket_pubsub_sample")]
-pub(crate) fn router(path: &'_ str) -> Router<AppState> {
+pub(crate) fn router() -> Router<AppState> {
     //let prefix: String = prefix.into();
     //Router::new().route((prefix + "/").as_str(), get(ws_handler))
     //Router::new().route([path, "/"].join("").as_str(), get(ws_handler))
-    Router::new().route(path, get(ws_handler))
+    Router::new().route("/ws", get(ws_handler))
 }

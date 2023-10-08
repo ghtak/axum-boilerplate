@@ -17,25 +17,20 @@ use crate::{
     util::{config::HttpConfig, middleware},
 };
 
-#[cfg(feature = "enable_websocket_pubsub_sample")]
-fn router() -> Router<AppState> {
-    Router::new().merge(crate::ws::pubsub::router("/ws"))
-}
-
-#[cfg(not(feature = "enable_websocket_pubsub_sample"))]
-fn router() -> Router<AppState> {
-    Router::new()
-}
-
 pub(crate) fn init_router(app_state: AppState, config: &HttpConfig) -> Router {
     let static_serv_service = {
         ServeDir::new(config.static_directory.as_str())
             .not_found_service((|_uri: Uri| async move { Error::NotFound }).into_service())
     };
 
-    router()
-        .merge(basic::router("/basic"))
-        .merge(v1::sample_router::router("/v1/sample"))
+    let router = Router::new()
+        .merge(basic::router())
+        .merge(v1::sample_router::router());
+
+    #[cfg(feature = "enable_websocket_pubsub_sample")]
+    let router = router.merge(crate::ws::pubsub::router());
+
+    router
         .layer(cors())
         .layer(DefaultBodyLimit::max(10 * 1024 * 1024))
         .layer(axum::middleware::map_response(middleware::response_map))

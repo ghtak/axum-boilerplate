@@ -60,9 +60,6 @@ pub(crate) fn router_(app_state: AppState) -> Router {
         .with_state(app_state)
 }
 
-pub(crate) fn router(path: &'_ str) -> Router<AppState> {
-    Router::new().route(
-        path,
-        get(get_samples_v3).post(create_sample_v3),
-    )
+pub(crate) fn router() -> Router<AppState> {
+    Router::new().route("/api/v1/sample", get(get_samples_v3).post(create_sample_v3))
 }

@@ -1,7 +1,11 @@
 use std::env;
 use std::sync::Arc;
 
-use axum::{extract::FromRef, http::Extensions};
+use async_trait::async_trait;
+use axum::{
+    extract::{FromRef, FromRequestParts},
+    http::{request::Parts, Extensions},
+};
 use tokio::sync::RwLock;
 
 use crate::{diagnostics, util::config::TomlConfig};
@@ -9,30 +13,79 @@ use crate::{diagnostics, util::config::TomlConfig};
 #[cfg(feature = "enable_websocket_pubsub_sample")]
 use crate::ws::pubsub::PubSubState;
 
-#[cfg(feature = "dbtype_sqlite")]
-use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, Pool, Sqlite};
-#[cfg(feature = "dbtype_sqlite")]
-pub type DataBase = Sqlite;
+use sqlx::Pool;
 
-#[cfg(feature = "dbtype_postgres")]
-use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
-#[cfg(feature = "dbtype_postgres")]
-pub type DataBase = Postgres;
+#[cfg(feature = "use_sqlite")]
+mod db_impl {
+    use sqlx::{sqlite::SqlitePoolOptions, Sqlite};
+    pub(crate) type DataBase = Sqlite;
+    pub(crate) type PoolOptions = SqlitePoolOptions;
+}
+
+#[cfg(feature = "use_postgres")]
+mod db_impl {
+    use sqlx::{postgres::PgPoolOptions, Postgres};
+    pub(crate) type DataBase = Postgres;
+    pub(crate) type PoolOptions = PgPoolOptions;
+}
+
+pub(crate) type DataBase = db_impl::DataBase;
+pub(crate) type DataBasePoolOptions = db_impl::PoolOptions;
+
+use bb8;
+use bb8_redis;
+
+pub(crate) type RedisPool = bb8::Pool<bb8_redis::RedisConnectionManager>;
+pub(crate) struct RedisConnection(
+    pub bb8::PooledConnection<'static, bb8_redis::RedisConnectionManager>,
+);
 
 // https://docs.rs/axum/latest/axum/extract/struct.State.html
-
 #[derive(Clone, Debug)]
 pub(crate) struct AppState {
     pub db_pool: Pool<DataBase>,
+    pub redis_pool: RedisPool,
     pub extentions: Arc<RwLock<Extensions>>,
-
     #[cfg(feature = "enable_websocket_pubsub_sample")]
     pub pubsub: PubSubState,
 }
 
 impl AppState {
-    #[cfg(feature = "dbtype_sqlite")]
     pub async fn new(config: &TomlConfig) -> Self {
+        #[cfg(feature = "use_sqlite")]
+        Self::sqlite_create_database(&config).await;
+
+        // for sqlx::query!
+        env::set_var("DATABASE_URL", config.database.url.as_str());
+        AppState {
+            db_pool: DataBasePoolOptions::new()
+                .max_connections(config.database.max_connection)
+                .connect(config.database.url.as_str())
+                .await
+                .expect("Unabled to Connect to Database"),
+
+            redis_pool: bb8::Pool::builder()
+                .build(bb8_redis::RedisConnectionManager::new(config.redis.url.as_str()).unwrap())
+                .await
+                .unwrap(),
+
+            extentions: Arc::new(RwLock::new(Extensions::default())),
+
+            #[cfg(feature = "enable_websocket_pubsub_sample")]
+            pubsub: PubSubState::new(),
+        }
+    }
+
+    pub async fn migrate_database(&self) -> diagnostics::Result<()> {
+        sqlx::migrate!("./migrations").run(&self.db_pool).await?;
+        Ok(())
+    }
+
+    #[cfg(feature = "use_sqlite")]
+    pub async fn sqlite_create_database(config: &TomlConfig) {
+        use sqlx::migrate::MigrateDatabase;
+        use sqlx::Sqlite;
+
         assert!(
             config.database.url.starts_with("sqlite://"),
             "invalid database url scheme"
@@ -46,45 +99,6 @@ impl AppState {
         } else {
             tracing::debug!("Database already exists");
         }
-        env::set_var("DATABASE_URL", config.database.url.as_str());
-        AppState {
-            db_pool: SqlitePoolOptions::new()
-                .max_connections(config.database.max_connection)
-                .connect(config.database.url.as_str())
-                .await
-                .expect("Unabled to Connect to Database"),
-
-            extentions: Arc::new(RwLock::new(Extensions::default())),
-
-            #[cfg(feature = "enable_websocket_pubsub_sample")]
-            pubsub: PubSubState::new(),
-        }
-    }
-
-    #[cfg(feature = "dbtype_postgres")]
-    pub async fn new(config: &TomlConfig) -> Self {
-        assert!(
-            config.database.url.starts_with("postgres://"),
-            "invalid database url scheme"
-        );
-        env::set_var("DATABASE_URL", config.database.url.as_str());
-        AppState {
-            db_pool: PgPoolOptions::new()
-                .max_connections(config.database.max_connection)
-                .connect(config.database.url.as_str())
-                .await
-                .expect("Unabled to Connect to Database"),
-
-            extentions: Arc::new(RwLock::new(Extensions::default())),
-
-            #[cfg(feature = "enable_websocket_pubsub_sample")]
-            pubsub: PubSubState::new(),
-        }
-    }
-
-    pub async fn migrate_database(&self) -> diagnostics::Result<()> {
-        sqlx::migrate!("./migrations").run(&self.db_pool).await?;
-        Ok(())
     }
 }
 
@@ -93,5 +107,29 @@ impl AppState {
 impl FromRef<AppState> for Pool<DataBase> {
     fn from_ref(input: &AppState) -> Self {
         input.db_pool.clone()
+    }
+}
+
+impl FromRef<AppState> for RedisPool {
+    fn from_ref(input: &AppState) -> Self {
+        input.redis_pool.clone()
+    }
+}
+
+#[async_trait]
+impl<S> FromRequestParts<S> for RedisConnection
+where
+    S: Send + Sync,
+    RedisPool: FromRef<S>,
+{
+    type Rejection = diagnostics::Error;
+
+    async fn from_request_parts(_parts: &mut Parts, state: &S) -> diagnostics::Result<Self> {
+        let pool = RedisPool::from_ref(state);
+        let conn = pool
+            .get_owned()
+            .await
+            .map_err(|e| diagnostics::Error::BB8Error(e.to_string()))?;
+        Ok(Self(conn))
     }
 }

@@ -7,6 +7,7 @@ pub(crate) struct TomlConfig {
     pub(crate) http: HttpConfig,
     pub(crate) database: DatabaseConfig,
     pub(crate) tracing: TracingConfig,
+    pub(crate) redis: RedisConfig,
 }
 
 #[derive(Deserialize, Debug)]
@@ -56,6 +57,13 @@ pub(crate) struct ConsoleConfig {
     pub(crate) with_line_number: bool,
     pub(crate) with_target: bool,
 }
+
+#[derive(Deserialize, Debug)]
+pub(crate) struct RedisConfig {
+    pub(crate) url: String,
+}
+
+
 
 impl TomlConfig {
     pub(crate) fn from_file(filename: &str) -> anyhow::Result<Self> {

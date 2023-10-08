@@ -54,6 +54,9 @@ pub enum Error {
 
     #[error("Not Implemented")]
     NotImplemented,
+
+    #[error("BB8Error {0}")]
+    BB8Error(String),
 }
 
 impl From<sqlx::Error> for Error {

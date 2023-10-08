@@ -16,19 +16,27 @@ axum = { version = "0.6.20", features = ["multipart", "ws", "headers"] }
 axum-extra = { version = "0.8.0", features = ["cookie"] }
 axum-macros = "0.3.7"
 hyper = { version = "0.14.26", features = ["full"] }
-tower =  { version = "0.4", features = ["full"] }
+tower = { version = "0.4", features = ["full"] }
 tower-http = { version = "0.4", features = ["full"] }
-serde =  { version = "1.0.164", features = ["derive"] }
+serde = { version = "1.0.164", features = ["derive"] }
 serde_json = "1.0.99"
 anyhow = "1.0.75"
 toml = "0.8.0"
 thiserror = "1.0.48"
-sqlx = { version = "0.7", features = [ "runtime-tokio", "tls-rustls", "postgres", "json", "sqlite"] }
+sqlx = { version = "0.7", features = [
+    "runtime-tokio",
+    "tls-rustls",
+    "postgres",
+    "json",
+    "sqlite",
+] }
 async-trait = "0.1.73"
 futures = "0.3.28"
 tonic = "0.10.2"
 prost = "0.12.1"
 tonic-reflection = "0.10.2"
+bb8-redis = "0.13.1"
+bb8 = "0.8.1"
 
 [build-dependencies]
 tonic-build = "0.10.2"
@@ -42,8 +50,10 @@ features = [
 ]
 
 [features]
-default = ["enable_websocket_pubsub_sample", "enable_grpc_sample", "dbtype_sqlite"]
+default = [
+    "enable_websocket_pubsub_sample",
+    "use_sqlite",
+]
 enable_websocket_pubsub_sample = []
-enable_grpc_sample = []
-dbtype_sqlite = []
-dbtype_postgres = []
+use_sqlite = []
+use_postgres = []

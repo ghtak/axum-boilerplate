@@ -9,10 +9,13 @@ url = "sqlite://sqlite.db"
 max_connection = 8
 with_migrations = true
 
+[redis]
+url = "redis://localhost:6379"
+
 [tracing.rolling_file]
 directory = "./logs"
 file_name_prefix = "log"
-rotation= "DAILY"
+rotation = "DAILY"
 app_only = true
 with_max_level = "TRACE"
 with_file = true
