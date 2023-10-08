@@ -147,7 +147,9 @@ async fn sample_usecase() {
     let config = util::config::TomlConfig::from_file("config.toml").unwrap();
     let _guard = util::tracing::init(&config.tracing).unwrap();
     let app_state = AppState::new(&config).await;
-    let _ = app_state.create_tables().await;
+    if config.database.with_migrations {
+        let _ = app_state.migrate_database().await;
+    }
 
     let _ = BasicSampleUsecase::<SampleRepositoryDB>::from_ref(&app_state);
     let sample_usecase_impl = BasicSampleUsecase::<SampleRepositoryMap>::from_ref(&app_state);
