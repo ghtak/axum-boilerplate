@@ -16,8 +16,30 @@ pub(crate) type Result<T> = core::result::Result<T, Error>;
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("IoError: {0}")]
+    // generic errors
+    #[error(transparent)]
     IoError(#[from] std::io::Error),
+
+    #[error(transparent)]
+    AnyhowError(#[from] anyhow::Error),
+
+    #[error("Message {0}")]
+    Message(String),
+
+    #[error("JsonResponse: {code} {json}")]
+    JsonResponse {
+        code: StatusCode,
+        json: serde_json::Value,
+    },
+
+    #[error("NotFound")]
+    NotFound,
+
+    #[error("Unauthorized")]
+    Unauthorized,
+
+    #[error("NotImplemented")]
+    NotImplemented,
 
     #[error(transparent)]
     JsonRejection(#[from] JsonRejection),
@@ -37,29 +59,8 @@ pub enum Error {
     #[error("RowNotFound")]
     RowNotFound,
 
-    #[error(transparent)]
-    Other(#[from] anyhow::Error),
-
-    #[error("NotFound")]
-    NotFound,
-
-    #[error("Message {0}")]
-    Message(String),
-
-    #[error("JsonResponse: {code} {json}")]
-    JsonResponse {
-        code: StatusCode,
-        json: serde_json::Value,
-    },
-
-    #[error("Not Implemented")]
-    NotImplemented,
-
     #[error("BB8Error {0}")]
     BB8Error(String),
-
-    #[error("AuthRedirect")]
-    AuthRedirect,
 }
 
 impl From<sqlx::Error> for Error {
@@ -86,6 +87,7 @@ impl IntoResponse for Error {
             )
                 .into_response(),
             Error::NotFound => StatusCode::NOT_FOUND.into_response(),
+            Error::Unauthorized => StatusCode::UNAUTHORIZED.into_response(),
             _ => (
                 StatusCode::BAD_REQUEST,
                 Json(json!({ "message": format!("{:?}", self) })),

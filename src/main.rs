@@ -13,6 +13,8 @@ mod repository;
 mod router;
 mod usecase;
 mod util;
+mod depend;
+
 #[cfg(feature = "enable_websocket_pubsub_sample")]
 mod ws;
 

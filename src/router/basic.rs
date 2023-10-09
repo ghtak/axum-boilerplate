@@ -14,6 +14,7 @@ use serde_json::json;
 
 use crate::app_state::{AppState, RedisConnection, SessionStoreImpl};
 use crate::define;
+use crate::depend::Depend;
 use crate::diagnostics::{self, Error, Result};
 use crate::entity::User;
 
@@ -150,7 +151,7 @@ async fn multipart_get() -> Html<&'static str> {
 
 async fn multipart_post(mut multipart: Multipart) -> diagnostics::Result<&'static str> {
     while let Some(mut field) = multipart.next_field().await? {
-        while let Some(chunk) = field.chunk().await.map_err(|_err| Error::NotFound)? {
+        while let Some(chunk) = field.chunk().await? {
             tracing::debug!(
                 "Length of `{:?}` '{:?}'is {} bytes",
                 field.name(),
@@ -207,18 +208,18 @@ async fn redis_get(
     Ok(value)
 }
 
-async fn session_option(user: Option<User>) -> impl IntoResponse {
-    if let Some(u) = user {
+async fn session_option(user: Option<Depend<User>>) -> impl IntoResponse {
+    if let Some(Depend(u)) = user {
         return u.name;
     }
     "None".to_owned()
 }
 
-async fn session_required(user: User) -> impl IntoResponse {
+async fn session_required(Depend(user): Depend<User>) -> impl IntoResponse {
     user.name
 }
 
-async fn session_set(
+async fn session_create(
     State(session_store): State<SessionStoreImpl>,
     WithRejection(Path(name), _): WithRejection<Path<String>, diagnostics::Error>,
     jar: CookieJar,
@@ -245,6 +246,16 @@ async fn session_set(
     Ok((StatusCode::OK, jar))
 }
 
+async fn session_delete(
+    Depend(session): Depend<Session>,
+    State(session_store): State<SessionStoreImpl>,
+    jar: CookieJar,
+) -> diagnostics::Result<impl IntoResponse> {
+    session_store.destroy_session(session).await?;
+    let jar = jar.remove(Cookie::named(define::SESSION_COOKIE));
+    Ok((StatusCode::OK, jar))
+}
+
 pub(crate) fn router() -> Router<AppState> {
     Router::new()
         .route("/api/basic", get(index))
@@ -265,7 +276,8 @@ pub(crate) fn router() -> Router<AppState> {
         .route("/api/basic/redis/:key", get(redis_get))
         .route("/api/basic/session/option", get(session_option))
         .route("/api/basic/session/required", get(session_required))
-        .route("/api/basic/session/:name", get(session_set))
+        .route("/api/basic/session/:name", get(session_create))
+        .route("/api/basic/session/remove", get(session_delete))
 }
 
 pub(crate) fn router_(app_state: AppState) -> Router {
