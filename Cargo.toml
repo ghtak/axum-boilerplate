@@ -37,6 +37,8 @@ prost = "0.12.1"
 tonic-reflection = "0.10.2"
 bb8-redis = "0.13.1"
 bb8 = "0.8.1"
+async-session = "3.0.0"
+urlencoding = "2.1.3"
 
 [build-dependencies]
 tonic-build = "0.10.2"
@@ -50,10 +52,7 @@ features = [
 ]
 
 [features]
-default = [
-    "enable_websocket_pubsub_sample",
-    "use_sqlite",
-]
+default = ["enable_websocket_pubsub_sample", "use_sqlite"]
 enable_websocket_pubsub_sample = []
 use_sqlite = []
 use_postgres = []

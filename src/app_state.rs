@@ -40,11 +40,20 @@ pub(crate) struct RedisConnection(
     pub bb8::PooledConnection<'static, bb8_redis::RedisConnectionManager>,
 );
 
+mod session_impl{
+    use async_session::MemoryStore;
+
+    pub(crate) type SessionStoreImpl = MemoryStore;
+}
+
+pub(crate) type SessionStoreImpl = session_impl::SessionStoreImpl;
+
 // https://docs.rs/axum/latest/axum/extract/struct.State.html
 #[derive(Clone, Debug)]
 pub(crate) struct AppState {
     pub db_pool: Pool<DataBase>,
     pub redis_pool: RedisPool,
+    pub session_store: SessionStoreImpl,
     pub extentions: Arc<RwLock<Extensions>>,
     #[cfg(feature = "enable_websocket_pubsub_sample")]
     pub pubsub: PubSubState,
@@ -68,6 +77,8 @@ impl AppState {
                 .build(bb8_redis::RedisConnectionManager::new(config.redis.url.as_str()).unwrap())
                 .await
                 .unwrap(),
+
+            session_store: SessionStoreImpl::new(),
 
             extentions: Arc::new(RwLock::new(Extensions::default())),
 
@@ -113,6 +124,12 @@ impl FromRef<AppState> for Pool<DataBase> {
 impl FromRef<AppState> for RedisPool {
     fn from_ref(input: &AppState) -> Self {
         input.redis_pool.clone()
+    }
+}
+
+impl FromRef<AppState> for SessionStoreImpl {
+    fn from_ref(input: &AppState) -> Self {
+        input.session_store.clone()
     }
 }
 

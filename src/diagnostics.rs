@@ -57,6 +57,9 @@ pub enum Error {
 
     #[error("BB8Error {0}")]
     BB8Error(String),
+
+    #[error("AuthRedirect")]
+    AuthRedirect,
 }
 
 impl From<sqlx::Error> for Error {
