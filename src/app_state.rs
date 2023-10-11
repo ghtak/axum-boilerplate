@@ -8,7 +8,7 @@ use axum::{
 };
 use tokio::sync::RwLock;
 
-use crate::{diagnostics, util::config::TomlConfig};
+use crate::{diagnostics, session_impl, util::config::TomlConfig};
 
 #[cfg(feature = "enable_websocket_pubsub_sample")]
 use crate::ws::pubsub::PubSubState;
@@ -40,12 +40,6 @@ pub(crate) struct RedisConnection(
     pub bb8::PooledConnection<'static, bb8_redis::RedisConnectionManager>,
 );
 
-mod session_impl{
-    use async_session::MemoryStore;
-
-    pub(crate) type SessionStoreImpl = MemoryStore;
-}
-
 pub(crate) type SessionStoreImpl = session_impl::SessionStoreImpl;
 
 // https://docs.rs/axum/latest/axum/extract/struct.State.html
@@ -66,6 +60,11 @@ impl AppState {
 
         // for sqlx::query!
         env::set_var("DATABASE_URL", config.database.url.as_str());
+        let redis_pool = bb8::Pool::builder()
+            .build(bb8_redis::RedisConnectionManager::new(config.redis.url.as_str()).unwrap())
+            .await
+            .unwrap();
+
         AppState {
             db_pool: DataBasePoolOptions::new()
                 .max_connections(config.database.max_connection)
@@ -73,12 +72,9 @@ impl AppState {
                 .await
                 .expect("Unabled to Connect to Database"),
 
-            redis_pool: bb8::Pool::builder()
-                .build(bb8_redis::RedisConnectionManager::new(config.redis.url.as_str()).unwrap())
-                .await
-                .unwrap(),
+            redis_pool: redis_pool.clone(),
 
-            session_store: SessionStoreImpl::new(),
+            session_store: SessionStoreImpl::new(redis_pool),
 
             extentions: Arc::new(RwLock::new(Extensions::default())),
 

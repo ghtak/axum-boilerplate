@@ -1,0 +1,30 @@
+[http]
+host = "0.0.0.0"
+port = 18089
+static_directory = "./static"
+
+[database]
+url = "sqlite://sqlite.db"
+# url = "postgres://sa:sa@0.0.0.0:18089/axum-boilerplate"
+max_connection = 8
+with_migrations = true
+
+[redis]
+url = "redis://10.93.8.214:16379/5"
+
+[tracing.rolling_file]
+directory = "./logs"
+file_name_prefix = "log"
+rotation = "DAILY"
+app_only = true
+with_max_level = "TRACE"
+with_file = true
+with_line_number = true
+with_target = false
+
+[tracing.console]
+app_only = false
+with_max_level = "TRACE"
+with_file = false
+with_line_number = false
+with_target = true

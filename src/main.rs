@@ -13,7 +13,8 @@ mod repository;
 mod router;
 mod usecase;
 mod util;
-mod depend;
+mod depends;
+mod session_impl;
 
 #[cfg(feature = "enable_websocket_pubsub_sample")]
 mod ws;
@@ -23,7 +24,7 @@ mod tests;
 
 #[tokio::main]
 async fn main() {
-    let config = util::config::TomlConfig::from_file("app_config_local.toml").unwrap();
+    let config = util::config::TomlConfig::from_file("app_config_local2.toml").unwrap();
     let _guard = util::tracing::init(&config.tracing).unwrap();
     tracing::trace!("{config:?}");
     let app_state = AppState::new(&config).await;

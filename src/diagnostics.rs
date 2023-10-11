@@ -6,6 +6,8 @@ use axum::{
     response::IntoResponse,
     Json,
 };
+use bb8::RunError;
+use bb8_redis::redis::RedisError;
 use hyper::StatusCode;
 use serde_json::json;
 use thiserror::Error;
@@ -61,6 +63,9 @@ pub enum Error {
 
     #[error("BB8Error {0}")]
     BB8Error(String),
+
+    #[error("RedisError {0}")]
+    RedisError(#[from] RunError<RedisError>),
 }
 
 impl From<sqlx::Error> for Error {

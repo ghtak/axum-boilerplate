@@ -10,10 +10,10 @@ use hyper::header;
 
 use crate::{app_state::SessionStoreImpl, define::SESSION_COOKIE, diagnostics};
 
-use super::Depend;
+use super::Depends;
 
 #[async_trait]
-impl<S> FromRequestParts<S> for Depend<async_session::Session>
+impl<S> FromRequestParts<S> for Depends<async_session::Session>
 where
     SessionStoreImpl: FromRef<S> + SessionStore,
     S: Send + Sync,
@@ -44,6 +44,6 @@ where
             .await?
             .ok_or(diagnostics::Error::Unauthorized)?;
 
-        Ok(Depend(session))
+        Ok(Depends(session))
     }
 }

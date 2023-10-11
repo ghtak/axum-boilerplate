@@ -14,7 +14,7 @@ use serde_json::json;
 
 use crate::app_state::{AppState, RedisConnection, SessionStoreImpl};
 use crate::define;
-use crate::depend::Depend;
+use crate::depends::Depends;
 use crate::diagnostics::{self, Error, Result};
 use crate::entity::User;
 
@@ -208,14 +208,14 @@ async fn redis_get(
     Ok(value)
 }
 
-async fn session_option(user: Option<Depend<User>>) -> impl IntoResponse {
-    if let Some(Depend(u)) = user {
+async fn session_option(user: Option<Depends<User>>) -> impl IntoResponse {
+    if let Some(Depends(u)) = user {
         return u.name;
     }
     "None".to_owned()
 }
 
-async fn session_required(Depend(user): Depend<User>) -> impl IntoResponse {
+async fn session_required(Depends(user): Depends<User>) -> impl IntoResponse {
     user.name
 }
 
@@ -247,7 +247,7 @@ async fn session_create(
 }
 
 async fn session_delete(
-    Depend(session): Depend<Session>,
+    Depends(session): Depends<Session>,
     State(session_store): State<SessionStoreImpl>,
     jar: CookieJar,
 ) -> diagnostics::Result<impl IntoResponse> {
@@ -278,20 +278,4 @@ pub(crate) fn router() -> Router<AppState> {
         .route("/api/basic/session/required", get(session_required))
         .route("/api/basic/session/:name", get(session_create))
         .route("/api/basic/session/remove", get(session_delete))
-}
-
-pub(crate) fn router_(app_state: AppState) -> Router {
-    Router::new()
-        .route("/", get(index))
-        .route("/error", get(error))
-        .route("/state", get(state))
-        .route("/cookie", get(cookie))
-        .route("/json_value", post(json_value))
-        .route("/path/:id", get(path_fn))
-        //.route("/path/:a/:b", get(path_v2))
-        .route("/path/:a/:b", get(path_v3))
-        .route("/query", get(query))
-        .route("/multipart", get(multipart_get).post(multipart_post))
-        .route("/tree/*path", get(tree))
-        .with_state(app_state)
 }
