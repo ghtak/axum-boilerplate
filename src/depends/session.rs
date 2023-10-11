@@ -29,18 +29,20 @@ where
             .map_err(|e| match *e.name() {
                 header::COOKIE => match e.reason() {
                     TypedHeaderRejectionReason::Missing => diagnostics::Error::Unauthorized,
-                    _ => panic!("unexpected error getting Cookie header(s): {e}"),
+                    _ => diagnostics::Error::CookieError(format!(
+                        "unexpected error getting Cookie header(s): {e}"
+                    )),
                 },
-                _ => panic!("unexpected error getting cookies: {e}"),
+                _ => diagnostics::Error::CookieError(format!(
+                    "unexpected error getting cookies: {e}"
+                )),
             })?;
         let session_cookie = cookies
             .get(SESSION_COOKIE)
             .ok_or(diagnostics::Error::Unauthorized)?;
 
-        let session_cookie = urlencoding::decode(session_cookie).unwrap().to_string();
-        tracing::debug!("{}", session_cookie);
         let session = store
-            .load_session(session_cookie)
+            .load_session(urlencoding::decode(session_cookie).unwrap().to_string())
             .await?
             .ok_or(diagnostics::Error::Unauthorized)?;
 

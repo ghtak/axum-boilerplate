@@ -66,6 +66,9 @@ pub enum Error {
 
     #[error("RedisError {0}")]
     RedisError(#[from] RunError<RedisError>),
+
+    #[error("CookieError {0}")]
+    CookieError(String)
 }
 
 impl From<sqlx::Error> for Error {
